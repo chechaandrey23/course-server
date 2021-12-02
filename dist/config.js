@@ -35,6 +35,7 @@ exports.SEQUELIZE_POSTGRES_CONFIG = {
             require: true,
             rejectUnauthorized: false
         }
-    }
+    },
+    autoLoadModels: true
 };
 //# sourceMappingURL=config.js.map

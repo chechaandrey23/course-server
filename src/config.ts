@@ -42,7 +42,8 @@ export const SEQUELIZE_POSTGRES_CONFIG: any = {
 			require: true,
 			rejectUnauthorized: false
 		}
-	}
+	},
+	autoLoadModels: true
 };
 /*
 export const SEQUELIZE_POSTGRES_CONFIG: any = {
