@@ -15,6 +15,7 @@ export const GITHUB_CLIENT_ID = 'fa3f7124fe705f856d73';
 export const GITHUB_CLIENT_SECRET = '8f327ca7f4193b02906d881a35400cba232a8dc1';
 export const GITHUB_CALLBACK_URL = 'http://localhost:3039/auth/api/github/callback';
 
+
 //SequelizeModuleOptions
 export const SEQUELIZE_POSTGRES_DATABASE_URL = process.env.DATABASE_URL;
 
@@ -44,7 +45,7 @@ export const SEQUELIZE_POSTGRES_CONFIG: any = {
 	}
 };
 /*
-export const SEQUELIZE_POSTGRES_CONFIG = [{
+export const SEQUELIZE_POSTGRES_CONFIG: any = {
 	dialect: 'postgres',
 	host: 'localhost',
 	port: 5432,
@@ -52,5 +53,5 @@ export const SEQUELIZE_POSTGRES_CONFIG = [{
 	password: 'password',
 	database: 'course',
 	autoLoadModels: true
-}]
+};
 */
