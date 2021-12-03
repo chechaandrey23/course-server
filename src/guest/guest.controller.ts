@@ -17,6 +17,8 @@ import {RatingsService} from '../entries/ratings/ratings.service';
 import {LikesService} from '../entries/likes/likes.service';
 import {CommentsService} from '../entries/comments/comments.service';
 
+//import {ReviewSearchService} from '../reviewsearch/review.search.service'
+
 @Controller('/guest')
 export class GuestController {
 	constructor(
@@ -32,7 +34,8 @@ export class GuestController {
 		private tags: TagsService,
 		private ratings: RatingsService,
 		private likes: LikesService,
-		private comments: CommentsService
+		private comments: CommentsService,
+		//private reviewSearchService: ReviewSearchService
 	) {}
 
 	protected readonly countRows: number = 10;
@@ -66,4 +69,30 @@ export class GuestController {
 	public async getShortEditorUsers(@Query('page') page: number = 1) {
 		return await this.users.getShortEditorUserAll(this.countEditorRows, (page-1)*this.countEditorRows);
 	}
+	/*
+	@Get('/search/:query')
+	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
+		return await this.reviewSearchService.searchReviews(query);
+	}
+
+	@Post('/search/add')
+	public async setReviewOnSearch(@Body() review: any) {
+		return await this.reviewSearchService.indexReview(review);
+	}
+
+	@Post('/search/update')
+	public async updateReviewOnSearch(@Body() review: any) {
+		return await this.reviewSearchService.updateReview(review);
+	}
+
+	@Post('/search/addcomment')
+	public async addReviewComment() {
+		return await this.reviewSearchService.addReviewComment(8, 666, 'comment added to index!!!');
+	}
+
+	@Post('/search/deletecomment')
+	public async deleteReviewComment() {
+		return await this.reviewSearchService.deleteReviewComment(8, 666);
+	}
+	*/
 }

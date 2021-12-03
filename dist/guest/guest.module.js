@@ -39,7 +39,7 @@ GuestModule = __decorate([
             tags_module_1.TagsModule,
             ratings_module_1.RatingsModule,
             likes_module_1.LikesModule,
-            comments_module_1.CommentsModule
+            comments_module_1.CommentsModule,
         ],
         controllers: [
             guest_controller_1.GuestController

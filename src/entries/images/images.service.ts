@@ -35,7 +35,7 @@ export class ImagesService {
 
 				let newData = [];
 
-				for(const image of images) {
+				for(const image of images) {console.log(image)
 					const fileName = `${uuidv4()}.${image.originalname.split('.').at(-1)}`;
 					const linkFilename: string = await this.upLoad(fileName, image.buffer);
 					newData.push({userId, url: linkFilename, filename: fileName, vendor: 'google.bucket'});

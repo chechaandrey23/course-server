@@ -212,6 +212,8 @@ let ReviewsService = class ReviewsService {
             query.where = Object.assign(Object.assign({}, query.where), { userId: opts.condUserId });
         if (opts.condPublic !== undefined)
             query.where = Object.assign(Object.assign({}, query.where), { draft: !opts.condPublic });
+        if (opts.getByIds)
+            query.where = Object.assign(Object.assign({}, query.where), { id: opts.getByIds });
         if (opts.withTags)
             includeTags.where = { id: opts.withTags };
         if (opts.withTitles)
@@ -253,6 +255,14 @@ let ReviewsService = class ReviewsService {
                 includeTitleGroups,
                 includeTags,
             ], where: { id: opts.reviewId }, subQuery: false, paranoid, transaction };
+        if (opts.withCommentAll) {
+            const model = { model: comment_model_1.Comment, required: false, paranoid, attributes: ['id', 'comment'], where: {
+                    reviewId: [sequelize_typescript_1.Sequelize.col(`"${reviewModelName}"."id"`)]
+                } };
+            if (opts.condPublic !== undefined)
+                model.where = Object.assign(Object.assign({}, model.where), { draft: !opts.condPublic });
+            query.include.push(model);
+        }
         let otherQuery = {};
         if (opts.forUserId) {
             query.include.push({ model: rating_model_1.Rating, required: false, paranoid, attributes: ['id', 'userRating'], where: {

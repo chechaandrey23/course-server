@@ -41,6 +41,7 @@ let ImagesService = class ImagesService {
                     throw new common_1.ConflictException({ userId, reason: `User (userId: ${userId}) does not exist` });
                 let newData = [];
                 for (const image of images) {
+                    console.log(image);
                     const fileName = `${(0, uuid_1.v4)()}.${image.originalname.split('.').at(-1)}`;
                     const linkFilename = await this.upLoad(fileName, image.buffer);
                     newData.push({ userId, url: linkFilename, filename: fileName, vendor: 'google.bucket' });

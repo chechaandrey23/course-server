@@ -244,6 +244,8 @@ export class ReviewsService {
 		if(opts.condUserId) query.where = {...query.where, userId: opts.condUserId};
 		if(opts.condPublic !== undefined) query.where = {...query.where, draft: !opts.condPublic};
 
+		if(opts.getByIds) query.where = {...query.where, id: opts.getByIds};
+
 		if(opts.withTags) includeTags.where = {id: opts.withTags};
 		if(opts.withTitles) includeTitleGroups.where = {...includeTitleGroups.where, titleId: opts.withTitles};
 		if(opts.withGroups) includeTitleGroups.where = {...includeTitleGroups.where, groupId: opts.withGroups};
@@ -287,8 +289,16 @@ export class ReviewsService {
 			includeUsers,
 			includeTitleGroups,
 			includeTags,
-			//{model: Rating, attributes: [], paranoid}
 		], where: {id: opts.reviewId}, subQuery:false, paranoid, transaction};
+
+		if(opts.withCommentAll) {
+			const model: any = {model: Comment, required: false, paranoid, attributes: ['id', 'comment'], where: {
+				reviewId: [Sequelize.col(`"${reviewModelName}"."id"`)]
+			}};
+			if(opts.condPublic !== undefined) model.where = {...model.where, draft: !opts.condPublic};
+			//if(opts.condBlocked !== undefined) model.where = {...model.where, blocked: opts.condBlocked};
+			query.include.push(model);
+		}
 
 		let otherQuery: any = {};
 
@@ -329,6 +339,8 @@ interface OptionsQueryAll {
 	condUserId?: number;
 	condPublic?: boolean;
 	forUserId?: number;
+	getByIds?: number[];
+	condBlocked?: boolean;
 }
 
 interface OptionsQueryOne {
@@ -338,4 +350,6 @@ interface OptionsQueryOne {
 	condUserId?: number;
 	condPublic?: boolean;
 	forUserId?: number;
+	withCommentAll?: boolean;
+	condBlocked?: boolean;
 }

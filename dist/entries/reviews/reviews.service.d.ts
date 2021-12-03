@@ -54,6 +54,8 @@ interface OptionsQueryAll {
     condUserId?: number;
     condPublic?: boolean;
     forUserId?: number;
+    getByIds?: number[];
+    condBlocked?: boolean;
 }
 interface OptionsQueryOne {
     reviewId: number;
@@ -62,5 +64,7 @@ interface OptionsQueryOne {
     condUserId?: number;
     condPublic?: boolean;
     forUserId?: number;
+    withCommentAll?: boolean;
+    condBlocked?: boolean;
 }
 export {};

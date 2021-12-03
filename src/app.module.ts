@@ -20,6 +20,7 @@ import {SEQUELIZE_POSTGRES_CONFIG} from './config';
 		UserModule,
 		EditorModule,
 		GuestModule,
+		//SequelizeModule.forRoot(SEQUELIZE_POSTGRES_CONFIG),
 		SequelizeModule.forRoot(SEQUELIZE_POSTGRES_CONFIG),
 		FinalModule
 	],

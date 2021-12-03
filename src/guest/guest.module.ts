@@ -16,6 +16,8 @@ import {RatingsModule} from '../entries/ratings/ratings.module';
 import {LikesModule} from '../entries/likes/likes.module';
 import {CommentsModule} from '../entries/comments/comments.module';
 
+//import {ReviewSearchModule} from '../reviewsearch/review.search.module';
+
 @Module({
 	imports: [
 		UsersModule,
@@ -30,13 +32,15 @@ import {CommentsModule} from '../entries/comments/comments.module';
 		TagsModule,
 		RatingsModule,
 		LikesModule,
-		CommentsModule
+		CommentsModule,
+
+		//ReviewSearchModule
 	],
 	controllers: [
 		GuestController
 	],
 	providers: [
-		
+
 	]
 })
 export class GuestModule {}
