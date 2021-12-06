@@ -22,6 +22,8 @@ const jwt_access_auth_guard_1 = require("./guards/jwt.access.auth.guard");
 const jwt_refresh_auth_guard_1 = require("./guards/jwt.refresh.auth.guard");
 const local_auth_guard_1 = require("./guards/local.auth.guard");
 const github_auth_guard_1 = require("./guards/github.auth.guard");
+const facebook_auth_guard_1 = require("./guards/facebook.auth.guard");
+const google_auth_guard_1 = require("./guards/google.auth.guard");
 let AuthController = class AuthController {
     constructor(refreshTokenService, authService, usersService) {
         this.refreshTokenService = refreshTokenService;
@@ -67,6 +69,24 @@ let AuthController = class AuthController {
     }
     async authGitHub(req) { }
     async authGitHubCallback(req) {
+        const user = req.user;
+        const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
+        const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
+        await this.refreshTokenService.addRefreshToken(user.id, refresh.token, config_1.JWT_REFRESH_EXPIRATION_TIME);
+        req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
+        return { id: user.id, roles: user.roles, accessToken: access.token };
+    }
+    async authFaceBook(req) { }
+    async authFaceBookCallback(req) {
+        const user = req.user;
+        const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
+        const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
+        await this.refreshTokenService.addRefreshToken(user.id, refresh.token, config_1.JWT_REFRESH_EXPIRATION_TIME);
+        req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
+        return { id: user.id, roles: user.roles, accessToken: access.token };
+    }
+    async authGoogle(req) { }
+    async authGoogleCallback(req) {
         const user = req.user;
         const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
         const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
@@ -129,6 +149,40 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "authGitHubCallback", null);
+__decorate([
+    (0, common_1.UseGuards)(facebook_auth_guard_1.FaceBookAuthGuard),
+    (0, common_1.Get)('/facebook'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "authFaceBook", null);
+__decorate([
+    (0, common_1.Redirect)('/user', 302),
+    (0, common_1.UseGuards)(facebook_auth_guard_1.FaceBookAuthGuard),
+    (0, common_1.Get)('/facebook/callback'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "authFaceBookCallback", null);
+__decorate([
+    (0, common_1.UseGuards)(google_auth_guard_1.GoogleAuthGuard),
+    (0, common_1.Get)('/google'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "authGoogle", null);
+__decorate([
+    (0, common_1.Redirect)('/user', 302),
+    (0, common_1.UseGuards)(google_auth_guard_1.GoogleAuthGuard),
+    (0, common_1.Get)('/google/callback'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "authGoogleCallback", null);
 AuthController = __decorate([
     (0, common_1.Controller)('auth/api'),
     __metadata("design:paramtypes", [refresh_token_service_1.RefreshTokenService, auth_service_1.AuthService, users_service_1.UsersService])

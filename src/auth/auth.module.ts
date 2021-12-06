@@ -13,6 +13,8 @@ import {JwtAccessStrategy} from './strategy/jwt.access.strategy';
 import {JwtRefreshStrategy} from './strategy/jwt.refresh.strategy';
 import {JwtIsRefreshStrategy} from './strategy/jwt.is.refresh.strategy';
 import {GitHubStrategy} from './strategy/github.strategy';
+import {FaceBookStrategy} from './strategy/facebook.strategy';
+import {GoogleStrategy} from './strategy/google.strategy';
 
 @Module({
 	imports: [
@@ -33,11 +35,12 @@ import {GitHubStrategy} from './strategy/github.strategy';
 		JwtAccessStrategy,
 		JwtRefreshStrategy,
 		JwtIsRefreshStrategy,
-		GitHubStrategy
+		GitHubStrategy,
+		FaceBookStrategy,
+		GoogleStrategy
 	],
 	exports: [
 		AuthService
 	]
 })
 export class AuthModule {}
-

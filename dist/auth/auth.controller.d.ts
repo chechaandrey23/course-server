@@ -32,4 +32,16 @@ export declare class AuthController {
         roles: any;
         accessToken: string;
     }>;
+    authFaceBook(req: any): Promise<void>;
+    authFaceBookCallback(req: any): Promise<{
+        id: any;
+        roles: any;
+        accessToken: string;
+    }>;
+    authGoogle(req: any): Promise<void>;
+    authGoogleCallback(req: any): Promise<{
+        id: any;
+        roles: any;
+        accessToken: string;
+    }>;
 }

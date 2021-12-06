@@ -12,6 +12,8 @@ import {JWTRefreshAuthGuard} from './guards/jwt.refresh.auth.guard';
 import {JWTIsRefreshAuthGuard} from './guards/jwt.is.refresh.auth.guard';
 import {LocalAuthGuard} from './guards/local.auth.guard';
 import {GitHubAuthGuard} from './guards/github.auth.guard';
+import {FaceBookAuthGuard} from './guards/facebook.auth.guard';
+import {GoogleAuthGuard} from './guards/google.auth.guard';
 
 import {UserRoleGuard} from './guards/user.role.guard';
 import {EditorRoleGuard} from './guards/editor.role.guard';
@@ -95,6 +97,46 @@ export class AuthController {
 	@UseGuards(GitHubAuthGuard)
 	@Get('/github/callback')
 	public async authGitHubCallback(@Request() req) {
+		const user = req.user;
+
+		const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
+		const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
+
+		await this.refreshTokenService.addRefreshToken(user.id, refresh.token, JWT_REFRESH_EXPIRATION_TIME);
+
+		req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
+
+		return {id: user.id, roles: user.roles, accessToken: access.token};
+	}
+
+	@UseGuards(FaceBookAuthGuard)
+	@Get('/facebook')
+	public async authFaceBook(@Request() req) {}
+
+	@Redirect('/user', 302)
+	@UseGuards(FaceBookAuthGuard)
+	@Get('/facebook/callback')
+	public async authFaceBookCallback(@Request() req) {
+		const user = req.user;
+
+		const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
+		const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
+
+		await this.refreshTokenService.addRefreshToken(user.id, refresh.token, JWT_REFRESH_EXPIRATION_TIME);
+
+		req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
+
+		return {id: user.id, roles: user.roles, accessToken: access.token};
+	}
+
+	@UseGuards(GoogleAuthGuard)
+	@Get('/google')
+	public async authGoogle(@Request() req) {}
+
+	@Redirect('/user', 302)
+	@UseGuards(GoogleAuthGuard)
+	@Get('/google/callback')
+	public async authGoogleCallback(@Request() req) {
 		const user = req.user;
 
 		const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);

@@ -19,6 +19,8 @@ const jwt_access_strategy_1 = require("./strategy/jwt.access.strategy");
 const jwt_refresh_strategy_1 = require("./strategy/jwt.refresh.strategy");
 const jwt_is_refresh_strategy_1 = require("./strategy/jwt.is.refresh.strategy");
 const github_strategy_1 = require("./strategy/github.strategy");
+const facebook_strategy_1 = require("./strategy/facebook.strategy");
+const google_strategy_1 = require("./strategy/google.strategy");
 let AuthModule = class AuthModule {
 };
 AuthModule = __decorate([
@@ -38,7 +40,9 @@ AuthModule = __decorate([
             jwt_access_strategy_1.JwtAccessStrategy,
             jwt_refresh_strategy_1.JwtRefreshStrategy,
             jwt_is_refresh_strategy_1.JwtIsRefreshStrategy,
-            github_strategy_1.GitHubStrategy
+            github_strategy_1.GitHubStrategy,
+            facebook_strategy_1.FaceBookStrategy,
+            google_strategy_1.GoogleStrategy
         ],
         exports: [
             auth_service_1.AuthService
