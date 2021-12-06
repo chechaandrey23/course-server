@@ -71,6 +71,15 @@ let GroupsService = class GroupsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreGroup(id) {
+        try {
+            await this.groups.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteGroup(id) {
         try {
             return await this.sequelize.transaction({}, async (t) => {

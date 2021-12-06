@@ -10,6 +10,10 @@ export declare class LikesService {
         id: number;
         deletedAt: string;
     }>;
+    restoreLike(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteLike(id: number): Promise<{
         id: number;
     }>;

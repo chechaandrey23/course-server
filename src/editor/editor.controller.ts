@@ -62,13 +62,13 @@ export class EditorController {
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/review-new')
 	public async newReview(@Request() req) {
-		return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], true);
+		return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], false/* is blocked false*/, true);
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/review-edit')
 	public async editReview(@Request() req, @Body('id') id: number, @Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[]) {
-		return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags);
+		return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags, false/* is blocked false*/);
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)
@@ -77,25 +77,10 @@ export class EditorController {
 		return await this.reviews.removeReview(id);
 	}
 
-	@Get('/groups')
-	public async getGroupAll() {
-		return await this.groups.getShortGroupAll();
-	}
-
-	@Get('/part-titles/:query')
-	public async getTitlePart(@Param('query') query: string) {
-		return await this.titles.getPartTitleAll(this.countRows, 0, query);
-	}
-
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/title-new')
 	public async newTitle(@Body('title') title: string, @Body('description') description: string) {
 		return await this.titles.createTitle(title, description);
-	}
-
-	@Get('/part-tags/:query')
-	public async getTagPart(@Param('query') query: string) {
-		return await this.tags.getPartTagAll(this.countRows, 0, query);
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)

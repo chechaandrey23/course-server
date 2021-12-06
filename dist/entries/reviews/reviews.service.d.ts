@@ -3,6 +3,7 @@ import { Transaction } from 'sequelize';
 import { Review } from './review.model';
 import { ReviewTags } from './review.tags.model';
 import { TitleGroups } from '../titles/title.groups.model';
+import { Tag } from '../tags/tag.model';
 export interface queryOptions {
     withDeleted?: boolean;
     limit?: number;
@@ -19,15 +20,22 @@ export interface queryOptions {
 export declare class ReviewsService {
     private sequelize;
     private reviews;
+    private tags;
     private reviewTags;
     private titleGroups;
-    constructor(sequelize: Sequelize, reviews: typeof Review, reviewTags: typeof ReviewTags, titleGroups: typeof TitleGroups);
-    createReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], createWithOutGroupTitle?: boolean): Promise<Review>;
-    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[]): Promise<Review>;
+    constructor(sequelize: Sequelize, reviews: typeof Review, tags: typeof Tag, reviewTags: typeof ReviewTags, titleGroups: typeof TitleGroups);
+    createReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean, createWithOutGroupTitle?: boolean): Promise<Review>;
+    protected _patchReviewTag(t: Transaction, reviewId: number, tags: number[]): Promise<void>;
+    protected _updateReviewTag(t: Transaction, reviewId: number, tags: number[]): Promise<void>;
+    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<Review>;
     _createReviewOther(t: Transaction, tags: number[], reviewId: number): Promise<void>;
     removeReview(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreReview(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteReview(id: number): Promise<{
         id: number;
@@ -35,7 +43,6 @@ export declare class ReviewsService {
     getReviewAll(opts: OptionsQueryAll): Promise<Review[]>;
     getReviewOne(opts: OptionsQueryOne): Promise<Review>;
     getShortReviewAll(): Promise<Review[]>;
-    protected buildQuery(opts: queryOptions): any;
     protected buildQueryAll(opts: OptionsQueryAll): any;
     protected buildQueryOne(opts: OptionsQueryOne): any;
     getReviewTagAll(count: number, offset?: number): Promise<ReviewTags[]>;

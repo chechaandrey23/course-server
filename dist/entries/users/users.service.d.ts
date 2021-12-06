@@ -6,6 +6,7 @@ import { Role } from '../roles/role.model';
 import { UserInfo } from '../userinfos/userinfo.model';
 import { Theme } from '../themes/theme.model';
 import { Lang } from '../langs/lang.model';
+import { RefreshToken } from '../refreshtoken/refresh.token.model';
 export declare class UsersService {
     private sequelize;
     private roles;
@@ -14,20 +15,26 @@ export declare class UsersService {
     private themes;
     private langs;
     private userRoles;
-    constructor(sequelize: Sequelize, roles: typeof Role, users: typeof User, userInfos: typeof UserInfo, themes: typeof Theme, langs: typeof Lang, userRoles: typeof UserRoles);
+    private refreshToken;
+    constructor(sequelize: Sequelize, roles: typeof Role, users: typeof User, userInfos: typeof UserInfo, themes: typeof Theme, langs: typeof Lang, userRoles: typeof UserRoles, refreshToken: typeof RefreshToken);
     protected hashedPassword(password: string): Promise<string>;
     protected comparePassword(hash: string, clientPassword: string): Promise<boolean>;
     protected isSelectedRoleNewUser(role: any): boolean;
     protected getRoleEditorUser(): number;
     protected getRoleUserUser(): number;
-    createUser(user: string, password: string, email: string, first_name?: string, last_name?: string): Promise<User>;
-    createSocialUser(social_id: string, vendor: string, softCreate?: boolean, displayName?: string): Promise<User>;
+    createUser(user: string, password: string, email: string, first_name?: string, last_name?: string): Promise<any>;
+    createSocialUser(social_id: string, vendor: string, softCreate?: boolean, displayName?: string): Promise<any>;
     _createUserOther(t: Transaction, userId: number, displayName: string[]): Promise<void>;
     editUserAdmin(id: number, user: string, social_id: string, email: string, blocked: boolean, activated: boolean, roles: number[]): Promise<User>;
+    protected changedRoles(t: Transaction, roles: Array<any>, userId: number): Promise<boolean>;
     changePassword(id: number, prevPassword: string, newPassword: string): Promise<void>;
     removeUser(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreUser(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteUser(id: number): Promise<{
         id: number;

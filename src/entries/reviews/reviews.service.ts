@@ -37,11 +37,12 @@ export class ReviewsService {
 	constructor(
 		private sequelize: Sequelize,
 		@InjectModel(Review) private reviews: typeof Review,
+		@InjectModel(Tag) private tags: typeof Tag,
 		@InjectModel(ReviewTags) private reviewTags: typeof ReviewTags,
 		@InjectModel(TitleGroups) private titleGroups: typeof TitleGroups
 	) {}
 
-	public async createReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], createWithOutGroupTitle: boolean = false) {
+	public async createReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean, createWithOutGroupTitle: boolean = false) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
 				let titleGroupId = 0;
@@ -60,29 +61,48 @@ export class ReviewsService {
 					}
 				}
 
-				let res = await this.reviews.create({description, text, authorRating, userId, titleGroupId: titleGroupId || res0.getDataValue('id'), draft: !!draft}, {transaction: t});
+				let res = await this.reviews.create({description, blocked: !!blocked, text, authorRating, userId, titleGroupId: titleGroupId || res0.getDataValue('id'), draft: !!draft}, {transaction: t});
 
-				await this._createReviewOther(t, tags, res.getDataValue('id'));
+				//await this._createReviewOther(t, tags, res.getDataValue('id'));
+				await this._patchReviewTag(t, res.getDataValue('id'), tags);
 
-				return await this.reviews.findOne(this.buildQuery({reviewId: res.getDataValue('id'), transaction: t}));
+				return await this.reviews.findOne(this.buildQueryOne({reviewId: res.getDataValue('id'), transaction: t}));
 			});
 		} catch(e) {
 			handlerError(e);
 		}
 	}
 
-	public async editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[]) {
+	protected async _patchReviewTag(t: Transaction, reviewId: number, tags: number[]) {
+		let res2 = await this.tags.findAll({attributes: ['id'], transaction: t, paranoid: false});
+
+		let newData = res2.map((entry) => {return {
+			tagId: entry.getDataValue('id'),
+			reviewId: reviewId,
+			selected: !!~tags.indexOf(entry.getDataValue('id'))
+		}});
+
+		let res3 = await this.reviewTags.bulkCreate(newData, {transaction: t});
+	}
+
+	protected async _updateReviewTag(t: Transaction, reviewId: number, tags: number[]) {
+		await this.reviewTags.update({selected: false}, {where: {reviewId: reviewId}, transaction: t});
+		await this.reviewTags.update({selected: true}, {where: {reviewId: reviewId, tagId: {[Op.in]: tags}}, transaction: t});
+	}
+
+	public async editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
 				let res0 = await this.titleGroups.findOne({where: {titleId, groupId}, transaction: t, paranoid: false});
 
 				if(!res0) throw new ConflictException({titleId, groupId, reason: `group/title "${groupId}/${titleId}" NOT FOUND`});
 
-				await this.reviews.update({description, text, authorRating, userId, titleGroupId: res0.getDataValue('id'), draft: !!draft}, {where: {id}, transaction: t});
+				await this.reviews.update({description, blocked: !!blocked, text, authorRating, userId, titleGroupId: res0.getDataValue('id'), draft: !!draft}, {where: {id}, transaction: t});
 
-				await this._createReviewOther(t, tags, id);
+				//await this._createReviewOther(t, tags, id);
+				await this._updateReviewTag(t, id, tags);
 
-				return await this.reviews.findOne(this.buildQuery({reviewId: id, transaction: t}));
+				return await this.reviews.findOne(this.buildQueryOne({reviewId: id, transaction: t}));
 			});
 		} catch(e) {
 			handlerError(e, {id});
@@ -90,7 +110,7 @@ export class ReviewsService {
 	}
 
 	public async _createReviewOther(t: Transaction, tags: number[], reviewId: number) {
-		await this.reviewTags.destroy({where: {reviewId: reviewId, tagId: {[Op.in]: tags}}, transaction: t});
+		await this.reviewTags.destroy({where: {reviewId: reviewId, tagId: tags}, transaction: t});
 
 		let newData: any[] = tags.map((entry) => {return {
 			tagId: entry,
@@ -104,6 +124,15 @@ export class ReviewsService {
 		try {
 			await this.reviews.destroy({where: {id}});
 			return {id: id, deletedAt: (new Date()).toString()}
+		} catch(e) {
+			handlerError(e, {id});
+		}
+	}
+
+	public async restoreReview(id: number) {
+		try {
+			await this.reviews.restore({where: {id}});
+			return {id: id, deletedAt: null}
 		} catch(e) {
 			handlerError(e, {id});
 		}
@@ -137,7 +166,7 @@ export class ReviewsService {
 				{model: Group, attributes: ['id', 'group']}
 			]}], attributes: ['id'], where: {draft: false}});
 	}
-
+	/*
 	protected buildQuery(opts: queryOptions): any {
 		let ratingTableName = Rating.tableName.toString();
 		let reviewTableName = this.reviews.tableName.toString();
@@ -147,7 +176,7 @@ export class ReviewsService {
 		let paranoid = !opts.withDeleted;
 		let transaction = opts.transaction;
 
-		let tagQueryObject = {model: Tag, attributes: ['id', 'tag'],/* where: {},*/ paranoid};
+		let tagQueryObject = {model: Tag, attributes: ['id', 'tag'],/* where: {},* / paranoid};
 
 		let query = {attributes: {
 			include: [
@@ -192,6 +221,7 @@ export class ReviewsService {
 
 		return {...query, ...otherQuery};
 	}
+	*/
 
 	protected buildQueryAll(opts: OptionsQueryAll) {
 		let ratingTableName = Rating.tableName.toString();
@@ -202,16 +232,16 @@ export class ReviewsService {
 		let paranoid = !opts.withDeleted;
 		let transaction = opts.transaction;
 
-		const includeTags: any = {model: Tag, attributes: ['id', 'tag'],/* where: {},*/ paranoid};
-		const includeTitleGroups: any = {model: TitleGroups, paranoid, where: {}, include: [
-			{model: Title, attributes: ['id', 'title', 'description'], paranoid},
-			{model: Group, attributes: ['id', 'group'], paranoid}
+		const includeTags: any = {model: Tag, attributes: ['id', 'tag'], through: { where: { selected: true } }, paranoid};
+		const includeTitleGroups: any = {model: TitleGroups , paranoid, where: {}, include: [
+			{model: Title, required: false, attributes: ['id', 'title', 'description'], paranoid},
+			{model: Group, required: false, attributes: ['id', 'group'], paranoid}
 		]};
-		const includeUsers: any = {model: User, attributes: ['id', 'user', 'social_id'], paranoid, include: [
-			{model: UserInfo, attributes: ['first_name', 'last_name'], paranoid}
+		const includeUsers: any = {model: User, required: false, attributes: ['id', 'user', 'social_id'], paranoid, include: [
+			{model: UserInfo, required: false, attributes: ['first_name', 'last_name'], paranoid}
 		]};
 
-		let query = {attributes: {
+		let query: any = {attributes: {
 			include: [
 				[Sequelize.literal(`(SELECT ROUND(AVG("userRating"), 1) FROM "${ratingTableName}" WHERE "reviewId"="${reviewModelName}"."id")`), "averageUserRating"],
 				[Sequelize.literal(`(SELECT ROUND(AVG("authorRating"), 1) FROM "${reviewTableName}" WHERE "titleGroupId"="${reviewModelName}"."titleGroupId")`), "averageEditorRating"],
@@ -270,13 +300,13 @@ export class ReviewsService {
 		let paranoid = !opts.withDeleted;
 		let transaction = opts.transaction;
 
-		const includeTags: any = {model: Tag, attributes: ['id', 'tag'],/* where: {},*/ paranoid};
+		const includeTags: any = {model: Tag, attributes: ['id', 'tag'], through: { where: { selected: true } }, paranoid};
 		const includeTitleGroups: any = {model: TitleGroups, paranoid, where: {}, include: [
-			{model: Title, attributes: ['id', 'title', 'description'], paranoid},
-			{model: Group, attributes: ['id', 'group'], paranoid}
+			{model: Title, required: false, attributes: ['id', 'title', 'description'], paranoid},
+			{model: Group, required: false, attributes: ['id', 'group'], paranoid}
 		]};
-		const includeUsers: any = {model: User, attributes: ['id', 'user', 'social_id'], paranoid, include: [
-			{model: UserInfo, attributes: ['first_name', 'last_name'], paranoid}
+		const includeUsers: any = {model: User, required: false, attributes: ['id', 'user', 'social_id'], paranoid, include: [
+			{model: UserInfo, required: false, attributes: ['first_name', 'last_name'], paranoid}
 		]};
 
 		let query: any = {attributes: {
@@ -319,7 +349,10 @@ export class ReviewsService {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	public async getReviewTagAll(count: number, offset: number = 0) {
-		return await this.reviewTags.findAll({include: [], offset: offset, limit: count});
+		return await this.reviewTags.findAll({include: [Tag, {model: Review, attributes: ['id'], include: [{model: TitleGroups, paranoid: false, include: [
+			{model: Title, attributes: ['id', 'title'], paranoid: false},
+			{model: Group, attributes: ['id', 'group'], paranoid: false}
+		]}] }], offset: offset, limit: count});
 	}
 }
 

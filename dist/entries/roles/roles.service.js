@@ -71,6 +71,15 @@ let RolesService = class RolesService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreRole(id) {
+        try {
+            await this.roles.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteRole(id) {
         try {
             return await this.sequelize.transaction({}, async (t) => {

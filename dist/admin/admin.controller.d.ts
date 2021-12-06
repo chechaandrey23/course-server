@@ -12,6 +12,7 @@ import { TagsService } from '../entries/tags/tags.service';
 import { RatingsService } from '../entries/ratings/ratings.service';
 import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
+import { RefreshTokenService } from '../entries/refreshtoken/refresh.token.service';
 export declare class AdminController {
     private users;
     private roles;
@@ -26,15 +27,24 @@ export declare class AdminController {
     private ratings;
     private likes;
     private comments;
-    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService);
+    private refreshTokens;
+    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, refreshTokens: RefreshTokenService);
     protected readonly countRows: number;
+    getRefreshTokens(page?: number): Promise<import("../entries/refreshtoken/refresh.token.model").RefreshToken[]>;
+    deleteRefreshToken(id: number): Promise<{
+        id: number;
+    }>;
     getUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
-    addUser(user: string, password: string, email: string): Promise<import("../entries/users/user.model").User>;
-    addSocialUser(social_id: string, vendor: string): Promise<import("../entries/users/user.model").User>;
+    addUser(user: string, password: string, email: string, first_name: string, last_name: string): Promise<any>;
+    addSocialUser(social_id: string, vendor: string, soft_create: boolean, displayName: string): Promise<any>;
     editUserAdmin(id: number, user: string, social_id: string, emial: string, blocked: boolean, activated: boolean, roles: number[]): Promise<import("../entries/users/user.model").User>;
     removeUser(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreUser(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteUser(id: number): Promise<{
         id: number;
@@ -46,10 +56,14 @@ export declare class AdminController {
     getUserRoleAll(page?: number): Promise<import("../entries/users/user.roles.model").UserRoles[]>;
     getUserInfos(page?: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo[]>;
     addUserInfo(userId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
-    editUserInfo(id: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
+    editUserInfo(id: number, userId: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
     removeUserInfo(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreUserInfo(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteUserInfo(id: number): Promise<{
         id: number;
@@ -60,6 +74,10 @@ export declare class AdminController {
     removeRole(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreRole(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteRole(id: number): Promise<{
         id: number;
@@ -72,6 +90,10 @@ export declare class AdminController {
         id: number;
         deletedAt: string;
     }>;
+    restoreLang(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteLang(id: number): Promise<{
         id: number;
     }>;
@@ -82,6 +104,10 @@ export declare class AdminController {
     removeTheme(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreTheme(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteTheme(id: number): Promise<{
         id: number;
@@ -94,6 +120,10 @@ export declare class AdminController {
         id: number;
         deletedAt: string;
     }>;
+    restoreGroup(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteGroup(id: number): Promise<{
         id: number;
     }>;
@@ -105,18 +135,27 @@ export declare class AdminController {
         id: number;
         deletedAt: string;
     }>;
+    restoreTitle(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteTitle(id: number): Promise<{
         id: number;
     }>;
     getTitleGroupAll(page?: number): Promise<import("../entries/titles/title.groups.model").TitleGroups[]>;
     getShortTitles(page?: number): Promise<import("../entries/titles/title.model").Title[]>;
     getReviews(page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
+    getReview(reviewId: any): Promise<import("../entries/reviews/review.model").Review>;
     getShortReviews(): Promise<import("../entries/reviews/review.model").Review[]>;
-    addReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[]): Promise<import("../entries/reviews/review.model").Review>;
-    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[]): Promise<import("../entries/reviews/review.model").Review>;
+    addReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<import("../entries/reviews/review.model").Review>;
+    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<import("../entries/reviews/review.model").Review>;
     removeReview(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreReview(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteReview(id: number): Promise<{
         id: number;
@@ -129,6 +168,10 @@ export declare class AdminController {
         id: number;
         deletedAt: string;
     }>;
+    restoreImage(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteImage(id: number): Promise<{
         id: number;
     }>;
@@ -138,6 +181,10 @@ export declare class AdminController {
     removeTag(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreTag(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteTag(id: number): Promise<{
         id: number;
@@ -150,6 +197,10 @@ export declare class AdminController {
         id: number;
         deletedAt: string;
     }>;
+    restoreRating(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteRating(id: number): Promise<{
         id: number;
     }>;
@@ -160,6 +211,10 @@ export declare class AdminController {
         id: number;
         deletedAt: string;
     }>;
+    restoreLike(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteLike(id: number): Promise<{
         id: number;
     }>;
@@ -169,6 +224,10 @@ export declare class AdminController {
     removeComment(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreComment(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteComment(id: number): Promise<{
         id: number;

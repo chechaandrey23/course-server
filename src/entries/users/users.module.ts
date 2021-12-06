@@ -10,9 +10,11 @@ import {UserInfo} from '../userinfos/userinfo.model';
 import {Theme} from '../themes/theme.model';
 import {Lang} from '../langs/lang.model';
 
+import {RefreshToken} from '../refreshtoken/refresh.token.model';
+
 @Module({
 	imports: [
-		SequelizeModule.forFeature([User, UserRoles, Role, UserInfo, Theme, Lang])
+		SequelizeModule.forFeature([User, UserRoles, Role, UserInfo, Theme, Lang, RefreshToken])
 	],
 	controllers: [],
 	providers: [

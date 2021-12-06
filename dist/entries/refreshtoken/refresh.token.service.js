@@ -19,6 +19,7 @@ const sequelize_typescript_1 = require("sequelize-typescript");
 const bcrypt = require("bcryptjs");
 const handler_error_1 = require("../../helpers/handler.error");
 const refresh_token_model_1 = require("./refresh.token.model");
+const user_model_1 = require("../users/user.model");
 const config_1 = require("../../config");
 let RefreshTokenService = class RefreshTokenService {
     constructor(sequelize, refreshToken) {
@@ -59,7 +60,7 @@ let RefreshTokenService = class RefreshTokenService {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async replaceRefreshToken(userId, refreshToken, timeLive) {
+    async replaceRefreshToken(userId, refreshToken, newRefreshToken, timeLive) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
                 let res = await this.refreshToken.findOne({ where: { userId }, transaction: t });
@@ -67,7 +68,7 @@ let RefreshTokenService = class RefreshTokenService {
                     throw new common_1.NotAcceptableException(`Unable to update refresh token for user id "${userId}"`);
                 if (!res.RT1 || !await this.compareToken(res.RT1, refreshToken))
                     throw new common_1.NotAcceptableException(`Invalid refresh token provided`);
-                await this.refreshToken.update({ RT1: await this.hashedToken(refreshToken), dateEndRT1: Date.now() + timeLive }, { where: { userId }, transaction: t });
+                await this.refreshToken.update({ RT1: await this.hashedToken(newRefreshToken), dateEndRT1: Date.now() + timeLive }, { where: { userId }, transaction: t });
                 return true;
             });
         }
@@ -82,6 +83,20 @@ let RefreshTokenService = class RefreshTokenService {
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e);
+        }
+    }
+    async refreshTokenGetAll(count, offset = 0, withDeleted = false) {
+        return this.refreshToken.findAll({ attributes: { exclude: ['RT1'] }, include: [
+                { model: user_model_1.User, attributes: ['id', 'user', 'social_id'], paranoid: !withDeleted }
+            ], offset: offset, limit: count, paranoid: !withDeleted });
+    }
+    async refreshTokenDelete(id) {
+        try {
+            await this.refreshToken.destroy({ where: { id }, force: true });
+            return { id: id };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
         }
     }
 };

@@ -73,6 +73,15 @@ let CommentsService = class CommentsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreComment(id) {
+        try {
+            await this.comments.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteComment(id) {
         try {
             await this.comments.destroy({ where: { id }, force: true });

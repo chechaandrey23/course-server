@@ -52,10 +52,10 @@ let UserInfosService = class UserInfosService {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async editUserInfo(id, first_name, last_name, themeId, langId) {
+    async editUserInfo(id, userId, first_name, last_name, themeId, langId) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
-                await this.userInfos.update({ first_name, last_name, themeId, langId }, { where: { id }, transaction: t });
+                await this.userInfos.update({ userId, first_name, last_name, themeId, langId }, { where: { id }, transaction: t });
                 return await this.userInfos.findOne({
                     include: [lang_model_1.Lang, theme_model_1.Theme, { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] }],
                     where: { id }, transaction: t
@@ -70,6 +70,15 @@ let UserInfosService = class UserInfosService {
         try {
             await this.userInfos.destroy({ where: { id } });
             return { id: id, deletedAt: (new Date()).toString() };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
+    async restoreUserInfo(id) {
+        try {
+            await this.userInfos.restore({ where: { id } });
+            return { id: id, deletedAt: null };
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e, { id });

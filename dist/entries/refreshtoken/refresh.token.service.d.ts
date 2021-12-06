@@ -8,6 +8,10 @@ export declare class RefreshTokenService {
     protected compareToken(hash: string, clientToken: string): Promise<boolean>;
     addRefreshToken(userId: number, refreshToken: string, timeLive: number): Promise<boolean>;
     checkRefreshToken(userId: number, refreshToken: string): Promise<boolean>;
-    replaceRefreshToken(userId: number, refreshToken: string, timeLive: number): Promise<boolean>;
+    replaceRefreshToken(userId: number, refreshToken: string, newRefreshToken: string, timeLive: number): Promise<boolean>;
     deleteRefreshTokenAll(userId: number): Promise<boolean>;
+    refreshTokenGetAll(count: number, offset?: number, withDeleted?: boolean): Promise<RefreshToken[]>;
+    refreshTokenDelete(id: number): Promise<{
+        id: number;
+    }>;
 }

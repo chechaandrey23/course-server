@@ -56,9 +56,6 @@ export declare class ReviewSearchService {
     constructor(elasticsearchService: ElasticsearchService);
     indexReview(review: ReviewSearch): Promise<import("@elastic/elasticsearch").ApiResponse<ReviewSearchBody, unknown>>;
     searchReviews(text: string): Promise<{
-        _source: ReviewSearchBody;
-        _id: string;
-    }[] | {
         ids: any[];
         searchIds: any[];
     }>;
@@ -69,6 +66,8 @@ export declare class ReviewSearchService {
     updateReviewWithId(id: string, review: ReviewSearch): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     addReviewComment(reviewId: number, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReviewComment(reviewId: number, commentId: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    updateReviewComment(reviewId: number, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     addReviewCommentWithId(id: string, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReviewCommentWithId(id: string, commentId: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    updateReviewCommentWithId(id: string, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
 }

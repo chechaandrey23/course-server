@@ -69,6 +69,21 @@ export class GuestController {
 	public async getShortEditorUsers(@Query('page') page: number = 1) {
 		return await this.users.getShortEditorUserAll(this.countEditorRows, (page-1)*this.countEditorRows);
 	}
+
+	@Get('/groups')
+	public async getGroupAll() {
+		return await this.groups.getShortGroupAll();
+	}
+
+	@Get('/part-titles/:query')
+	public async getTitlePart(@Param('query') query: string) {
+		return await this.titles.getPartTitleAll(this.countRows, 0, query);
+	}
+
+	@Get('/part-tags/:query')
+	public async getTagPart(@Param('query') query: string) {
+		return await this.tags.getPartTagAll(this.countRows, 0, query);
+	}
 	/*
 	@Get('/search/:query')
 	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
@@ -93,6 +108,11 @@ export class GuestController {
 	@Post('/search/deletecomment')
 	public async deleteReviewComment() {
 		return await this.reviewSearchService.deleteReviewComment(8, 666);
+	}
+
+	@Post('/search/updatecomment')
+	public async updateReviewComment() {
+		return await this.reviewSearchService.updateReviewComment(8, 666, '777777comment added to index!!!');
 	}
 	*/
 }

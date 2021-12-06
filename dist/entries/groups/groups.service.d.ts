@@ -10,11 +10,15 @@ export declare class GroupsService {
     private titleGroups;
     constructor(sequelize: Sequelize, groups: typeof Group, titles: typeof Title, titleGroups: typeof TitleGroups);
     createGroup(group: string, description: string): Promise<Group>;
-    _patchTitleGroups(t: Transaction, groupId: number): Promise<void>;
+    protected _patchTitleGroups(t: Transaction, groupId: number): Promise<void>;
     editGroup(id: number, group: string, description: string): Promise<Group>;
     removeGroup(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreGroup(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteGroup(id: number): Promise<{
         id: number;

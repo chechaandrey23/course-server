@@ -16,8 +16,12 @@ import {RatingsModule} from '../entries/ratings/ratings.module';
 import {LikesModule} from '../entries/likes/likes.module';
 import {CommentsModule} from '../entries/comments/comments.module';
 
+import {RefreshTokenModule} from '../entries/refreshtoken/refresh.token.module';
+
 @Module({
 	imports: [
+		RefreshTokenModule,
+
 		UsersModule,
 		RolesModule,
 		ReviewsModule,
@@ -36,7 +40,7 @@ import {CommentsModule} from '../entries/comments/comments.module';
 		AdminController
 	],
 	providers: [
-		
+
 	]
 })
 export class AdminModule {}

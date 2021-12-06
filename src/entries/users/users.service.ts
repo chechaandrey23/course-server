@@ -16,6 +16,8 @@ import {Theme} from '../themes/theme.model';
 import {Lang} from '../langs/lang.model';
 import {Like} from '../likes/like.model';
 
+import {RefreshToken} from '../refreshtoken/refresh.token.model';
+
 @Injectable()
 export class UsersService {
 	constructor(
@@ -25,7 +27,8 @@ export class UsersService {
 		@InjectModel(UserInfo) private userInfos: typeof UserInfo,
 		@InjectModel(Theme) private themes: typeof Theme,
 		@InjectModel(Lang) private langs: typeof Lang,
-		@InjectModel(UserRoles) private userRoles: typeof UserRoles
+		@InjectModel(UserRoles) private userRoles: typeof UserRoles,
+		@InjectModel(RefreshToken) private refreshToken: typeof RefreshToken,
 	) {}
 
 	protected async hashedPassword(password: string): Promise<string> {
@@ -65,9 +68,11 @@ export class UsersService {
 
 				await this._createUserOther(t, res1.id, [first_name, last_name]);
 
-				return await this.users.findOne({include: [{model: Role, through: { where: { selected: true } }}], attributes: {include: [
+				const _user: any = await this.users.findOne({include: [{model: Role, through: { where: { selected: true } }}], attributes: {include: [
 					[Sequelize.literal(`(SELECT COUNT(*) FROM "${Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
 				], exclude: ['password']}, where: {id: res1.id}, transaction: t});
+
+				return _user;
 			});
 		} catch(e) {
 			handlerError(e);
@@ -84,10 +89,14 @@ export class UsersService {
 				if(res) {
 					if(res.blocked) throw new NotAcceptableException(`User with social id "${social_id}" - is BANNED`);
 
-					if(softCreate) {
-						return await this.users.findOne({include: [{model: Role, through: { where: { selected: true } }}], attributes: {include: [
+					if(!!softCreate) {
+						const _user: any = await this.users.findOne({include: [{model: Role, through: { where: { selected: true } }}], attributes: {include: [
 							[Sequelize.literal(`(SELECT COUNT(*) FROM "${Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
-						], exclude: ['password']}, where: {id: res.id}, transaction: t});
+						], exclude: ['password']}, where: {id: res.getDataValue('id')}, transaction: t});
+
+						if(!_user) throw new ConflictException({social_id, reason: `User with social id "${social_id}" is in the process of being removed and cannot be used`});
+
+						return _user;
 					} else {
 						throw new ConflictException({social_id, reason: `User with social id "${social_id}" already exists`});
 					}
@@ -156,10 +165,19 @@ export class UsersService {
 					newData['activated'] = false;
 				}
 
-				await this.userRoles.update({selected: false}, {where: {userId: id}, transaction: t});
-				await this.userRoles.update({selected: true}, {where: {userId: id, roleId: {[Op.in]: roles}}, transaction: t});
+				// clear refresh tokens
+				const changedRoles: boolean = await this.changedRoles(t, roles, id);
 
-				let res1 = await this.users.update({...newData, blocked, activated}, {where: {id}, transaction: t});
+				if(changedRoles) {
+					await this.userRoles.update({selected: false}, {where: {userId: id}, transaction: t});
+					await this.userRoles.update({selected: true}, {where: {userId: id, roleId: {[Op.in]: roles}}, transaction: t});
+				}
+
+				if(blocked || changedRoles) {
+					await this.refreshToken.update({RT1: null, dateEndRT1: null}, {where: {userId: id}});
+				}
+
+				let res1 = await this.users.update({...newData, blocked: !!blocked, activated}, {where: {id}, transaction: t});
 
 				return await this.users.findOne({include: [{model: Role, through: { where: { selected: true } }}], attributes: {include: [
 					[Sequelize.literal(`(SELECT COUNT(*) FROM "${Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
@@ -168,6 +186,12 @@ export class UsersService {
 		} catch(e) {
 			handlerError(e, {id});
 		}
+	}
+
+	protected async changedRoles(t: Transaction, roles: Array<any>, userId: number) {
+		let res: any = await this.userRoles.findAll({transaction: t, where: {userId: userId, selected: true}});
+
+		return !( roles.length === res.length && res.every((item) => !!~roles.indexOf(item.getDataValue('roleId'))) );
 	}
 
 	public async changePassword(id: number, prevPassword: string, newPassword: string) {}
@@ -184,9 +208,22 @@ export class UsersService {
 		}
 	}
 
+	public async restoreUser(id: number) {
+		try {
+			return await this.sequelize.transaction({}, async (t) => {
+				await this.userInfos.restore({where: {userId: id}, transaction: t});
+				await this.users.restore({where: {id}});
+				return {id: id, deletedAt: null}
+			});
+		} catch(e) {
+			handlerError(e, {id});
+		}
+	}
+
 	public async deleteUser(id: number) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
+				await this.refreshToken.destroy({where: {userId: id}, transaction: t, force: true});
 				await this.userInfos.destroy({where: {userId: id}, transaction: t, force: true});
 				await this.userRoles.destroy({where: {userId: id}, transaction: t, force: true});
 				await this.users.destroy({where: {id}, transaction: t, force: true});
@@ -226,7 +263,7 @@ export class UsersService {
 	}
 
 	public async getUserAll(count: number, offset: number = 0, withDeleted: boolean = false) {
-		return await this.users.findAll({include: [{model: Role, paranoid: !withDeleted}], attributes: {
+		return await this.users.findAll({include: [{model: Role, through: { where: { selected: true } }, paranoid: !withDeleted}], attributes: {
 			include: [
 				[Sequelize.literal(`(SELECT COUNT(*) FROM "${Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
 			],
@@ -257,6 +294,6 @@ export class UsersService {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	public async getUserRoleAll(count: number, offset: number = 0) {
-		return await this.userRoles.findAll({include: [], offset: offset, limit: count});
+		return await this.userRoles.findAll({include: [{model: User, attributes: ['id', 'user', 'social_id']}, Role], offset: offset, limit: count});
 	}
 }

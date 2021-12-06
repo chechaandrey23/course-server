@@ -12,13 +12,14 @@ const sequelize_1 = require("@nestjs/sequelize");
 const reviews_service_1 = require("./reviews.service");
 const review_model_1 = require("./review.model");
 const review_tags_model_1 = require("./review.tags.model");
+const tag_model_1 = require("../tags/tag.model");
 const title_groups_model_1 = require("../titles/title.groups.model");
 let ReviewsModule = class ReviewsModule {
 };
 ReviewsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            sequelize_1.SequelizeModule.forFeature([review_model_1.Review, review_tags_model_1.ReviewTags, title_groups_model_1.TitleGroups])
+            sequelize_1.SequelizeModule.forFeature([review_model_1.Review, review_tags_model_1.ReviewTags, title_groups_model_1.TitleGroups, tag_model_1.Tag])
         ],
         controllers: [],
         providers: [

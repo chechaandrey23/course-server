@@ -10,6 +10,5 @@ export declare const REFRESH_TOKEN_SALT_SECRET_1 = "I7S56";
 export declare const REFRESH_TOKEN_SALT_SECRET_2 = "NJ893";
 export declare const GITHUB_CLIENT_ID = "fa3f7124fe705f856d73";
 export declare const GITHUB_CLIENT_SECRET = "8f327ca7f4193b02906d881a35400cba232a8dc1";
-export declare const GITHUB_CALLBACK_URL = "http://localhost:3039/auth/api/github/callback";
-export declare const SEQUELIZE_POSTGRES_DATABASE_URL: string;
+export declare const GITHUB_CALLBACK_URL: string;
 export declare const SEQUELIZE_POSTGRES_CONFIG: any;

@@ -73,6 +73,10 @@ __decorate([
     (0, sequelize_typescript_1.HasMany)(() => like_model_1.Like),
     __metadata("design:type", like_model_1.Like)
 ], Review.prototype, "likes", void 0);
+__decorate([
+    (0, sequelize_typescript_1.Column)({ type: sequelize_typescript_1.DataType.STRING }),
+    __metadata("design:type", String)
+], Review.prototype, "searchId", void 0);
 Review = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'reviews', timestamps: true, paranoid: true, deletedAt: true })
 ], Review);

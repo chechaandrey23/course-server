@@ -16,7 +16,7 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
 			scope: ['email', 'profile'],
 		});
 	}
-	
+
 	async validate(accessToken: string, refreshToken: string, profile: any/*, done: VerifyCallback*/): Promise<any> {
 		let user: any = await this.usersService.createSocialUser(profile.id, profile.provider, true, profile.displayName);
 		user = user.toJSON();

@@ -60,25 +60,16 @@ let EditorController = class EditorController {
         return await this.reviews.getReviewOne({ reviewId: id, condUserId: req.user.id });
     }
     async newReview(req) {
-        return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], true);
+        return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], false, true);
     }
     async editReview(req, id, description, text, authorRating, titleId, groupId, draft, tags) {
-        return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags);
+        return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags, false);
     }
     async removeReview(req, id) {
         return await this.reviews.removeReview(id);
     }
-    async getGroupAll() {
-        return await this.groups.getShortGroupAll();
-    }
-    async getTitlePart(query) {
-        return await this.titles.getPartTitleAll(this.countRows, 0, query);
-    }
     async newTitle(title, description) {
         return await this.titles.createTitle(title, description);
-    }
-    async getTagPart(query) {
-        return await this.tags.getPartTagAll(this.countRows, 0, query);
     }
     async newTag(tag) {
         return await this.tags.createTag(tag);
@@ -145,19 +136,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "removeReview", null);
 __decorate([
-    (0, common_1.Get)('/groups'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], EditorController.prototype, "getGroupAll", null);
-__decorate([
-    (0, common_1.Get)('/part-titles/:query'),
-    __param(0, (0, common_1.Param)('query')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], EditorController.prototype, "getTitlePart", null);
-__decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/title-new'),
     __param(0, (0, common_1.Body)('title')),
@@ -166,13 +144,6 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "newTitle", null);
-__decorate([
-    (0, common_1.Get)('/part-tags/:query'),
-    __param(0, (0, common_1.Param)('query')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], EditorController.prototype, "getTagPart", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/tag-new'),

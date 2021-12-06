@@ -16,6 +16,10 @@ export declare class TitlesService {
         id: number;
         deletedAt: string;
     }>;
+    restoreTitle(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteTitle(id: number): Promise<{
         id: number;
     }>;

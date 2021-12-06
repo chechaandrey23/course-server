@@ -16,6 +16,10 @@ export declare class RolesService {
         id: number;
         deletedAt: string;
     }>;
+    restoreRole(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteRole(id: number): Promise<{
         id: number;
     }>;

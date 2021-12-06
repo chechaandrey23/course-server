@@ -10,6 +10,10 @@ export declare class LangsService {
         id: number;
         deletedAt: string;
     }>;
+    restoreLang(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteLang(id: number): Promise<{
         id: number;
     }>;

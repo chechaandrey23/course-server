@@ -33,4 +33,7 @@ export declare class GuestController {
     getTagOrderReviews(page?: number, order?: boolean): Promise<import("../entries/tags/tag.model").Tag[]>;
     protected countEditorRows: number;
     getShortEditorUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
+    getGroupAll(): Promise<import("../entries/groups/group.model").Group[]>;
+    getTitlePart(query: string): Promise<import("../entries/titles/title.model").Title[]>;
+    getTagPart(query: string): Promise<import("../entries/tags/tag.model").Tag[]>;
 }

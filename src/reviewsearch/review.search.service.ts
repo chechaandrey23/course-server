@@ -89,7 +89,7 @@ export class ReviewSearchService {
 						multi_match: {
 							query: text,
 							fields: [
-								'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments'
+								'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments.comment'
 							]
 						}
 					}
@@ -97,7 +97,7 @@ export class ReviewSearchService {
 		});
 
 		const hits = body.hits.hits;
-		return hits;
+		//return hits;
 		return hits.reduce((acc, entry) => {
 			acc.ids.push(entry._source.id);
 			acc.searchIds.push(entry._id);
@@ -226,6 +226,27 @@ export class ReviewSearchService {
 		});
 	}
 
+	async updateReviewComment(reviewId: number, commentId: number, comment: string) {
+		return await this.elasticsearchService.updateByQuery({
+			index: this.index,
+			body: {
+				query: {
+					match: {
+						id: reviewId,
+					}
+				},
+				script: {
+					source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+					lang: "painless",
+					params: {
+						commentId: commentId,
+						comment: comment
+					}
+				}
+			}
+		});
+	}
+
 	async addReviewCommentWithId(id: string, commentId: number, comment: string) {
 		return await this.elasticsearchService.updateByQuery({
 			index: this.index,
@@ -263,6 +284,27 @@ export class ReviewSearchService {
 					lang: "painless",
 					params: {
 						commentId: commentId
+					}
+				}
+			}
+		});
+	}
+
+	async updateReviewCommentWithId(id: string, commentId: number, comment: string) {
+		return await this.elasticsearchService.updateByQuery({
+			index: this.index,
+			body: {
+				query: {
+					terms: {
+						_id: [id],
+					}
+				},
+				script: {
+					source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+					lang: "painless",
+					params: {
+						commentId: commentId,
+						comment: comment
 					}
 				}
 			}

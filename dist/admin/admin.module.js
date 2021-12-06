@@ -22,11 +22,13 @@ const reviews_module_1 = require("../entries/reviews/reviews.module");
 const ratings_module_1 = require("../entries/ratings/ratings.module");
 const likes_module_1 = require("../entries/likes/likes.module");
 const comments_module_1 = require("../entries/comments/comments.module");
+const refresh_token_module_1 = require("../entries/refreshtoken/refresh.token.module");
 let AdminModule = class AdminModule {
 };
 AdminModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            refresh_token_module_1.RefreshTokenModule,
             users_module_1.UsersModule,
             roles_module_1.RolesModule,
             reviews_module_1.ReviewsModule,

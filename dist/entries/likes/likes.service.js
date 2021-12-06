@@ -74,6 +74,15 @@ let LikesService = class LikesService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreLike(id) {
+        try {
+            await this.likes.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteLike(id) {
         try {
             await this.likes.destroy({ where: { id }, force: true });

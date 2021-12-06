@@ -35,8 +35,9 @@ export class ImagesService {
 
 				let newData = [];
 
-				for(const image of images) {console.log(image)
-					const fileName = `${uuidv4()}.${image.originalname.split('.').at(-1)}`;
+				for(const image of images) {
+					const extNameArr = image.originalname.split('.');
+					const fileName = `${uuidv4()}.${extNameArr[extNameArr.length - 1]}`;
 					const linkFilename: string = await this.upLoad(fileName, image.buffer);
 					newData.push({userId, url: linkFilename, filename: fileName, vendor: 'google.bucket'});
 				}
@@ -90,13 +91,22 @@ export class ImagesService {
 		}
 	}
 
+	public async restoreImage(id: number) {
+		try {
+			await this.images.restore({where: {id}});
+			return {id: id, deletedAt: null}
+		} catch(e) {
+			handlerError(e, {id});
+		}
+	}
+
 	public async deleteImage(id: number) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
 				let res = await this.images.findOne({where: {id}, paranoid: false, transaction: t});
 				if(!res) throw new ConflictException({id, reason: `Image record id="${id}" NOT FOUND`});
 
-				await this.storageGoogleBucket.file(res.getDataValue('filename')).delete();
+				let gres = await this.storageGoogleBucket.file(res.getDataValue('filename')).delete();
 
 				await this.images.destroy({where: {id}, transaction: t, force: true});
 

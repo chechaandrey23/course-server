@@ -16,12 +16,13 @@ const role_model_1 = require("../roles/role.model");
 const userinfo_model_1 = require("../userinfos/userinfo.model");
 const theme_model_1 = require("../themes/theme.model");
 const lang_model_1 = require("../langs/lang.model");
+const refresh_token_model_1 = require("../refreshtoken/refresh.token.model");
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            sequelize_1.SequelizeModule.forFeature([user_model_1.User, user_roles_model_1.UserRoles, role_model_1.Role, userinfo_model_1.UserInfo, theme_model_1.Theme, lang_model_1.Lang])
+            sequelize_1.SequelizeModule.forFeature([user_model_1.User, user_roles_model_1.UserRoles, role_model_1.Role, userinfo_model_1.UserInfo, theme_model_1.Theme, lang_model_1.Lang, refresh_token_model_1.RefreshToken])
         ],
         controllers: [],
         providers: [

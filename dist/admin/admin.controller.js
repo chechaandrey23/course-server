@@ -28,8 +28,9 @@ const tags_service_1 = require("../entries/tags/tags.service");
 const ratings_service_1 = require("../entries/ratings/ratings.service");
 const likes_service_1 = require("../entries/likes/likes.service");
 const comments_service_1 = require("../entries/comments/comments.service");
+const refresh_token_service_1 = require("../entries/refreshtoken/refresh.token.service");
 let AdminController = class AdminController {
-    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments) {
+    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, refreshTokens) {
         this.users = users;
         this.roles = roles;
         this.langs = langs;
@@ -43,23 +44,33 @@ let AdminController = class AdminController {
         this.ratings = ratings;
         this.likes = likes;
         this.comments = comments;
+        this.refreshTokens = refreshTokens;
         this.countRows = 20;
         this.shortUsersCount = 150;
+    }
+    async getRefreshTokens(page = 1) {
+        return await this.refreshTokens.refreshTokenGetAll(this.countRows, (page - 1) * this.countRows, true);
+    }
+    async deleteRefreshToken(id) {
+        return await this.refreshTokens.refreshTokenDelete(id);
     }
     async getUsers(page = 1) {
         return await this.users.getUserAll(this.countRows, (page - 1) * this.countRows, true);
     }
-    async addUser(user, password, email) {
-        return await this.users.createUser(user, password, email);
+    async addUser(user, password, email, first_name, last_name) {
+        return await this.users.createUser(user, password, email, first_name, last_name);
     }
-    async addSocialUser(social_id, vendor) {
-        return await this.users.createSocialUser(social_id, vendor);
+    async addSocialUser(social_id, vendor, soft_create, displayName) {
+        return await this.users.createSocialUser(social_id, vendor, soft_create, displayName);
     }
     async editUserAdmin(id, user, social_id, emial, blocked, activated, roles) {
         return await this.users.editUserAdmin(id, user, social_id, emial, blocked, activated, roles);
     }
     async removeUser(id) {
         return await this.users.removeUser(id);
+    }
+    async restoreUser(id) {
+        return await this.users.restoreUser(id);
     }
     async deleteUser(id) {
         return await this.users.deleteUser(id);
@@ -82,11 +93,14 @@ let AdminController = class AdminController {
     async addUserInfo(userId) {
         return await this.userInfos.createUserInfo(userId);
     }
-    async editUserInfo(id, first_name, last_name, themeId, langId) {
-        return await this.userInfos.editUserInfo(id, first_name, last_name, themeId, langId);
+    async editUserInfo(id, userId, first_name, last_name, themeId, langId) {
+        return await this.userInfos.editUserInfo(id, userId, first_name, last_name, themeId, langId);
     }
     async removeUserInfo(id) {
         return await this.userInfos.removeUserInfo(id);
+    }
+    async restoreUserInfo(id) {
+        return await this.userInfos.restoreUserInfo(id);
     }
     async deleteUserInfo(id) {
         return await this.userInfos.deleteUserInfo(id);
@@ -102,6 +116,9 @@ let AdminController = class AdminController {
     }
     async removeRole(id) {
         return await this.roles.removeRole(id);
+    }
+    async restoreRole(id) {
+        return await this.roles.restoreRole(id);
     }
     async deleteRole(id) {
         return await this.roles.deleteRole(id);
@@ -121,6 +138,9 @@ let AdminController = class AdminController {
     async removeLang(id) {
         return await this.langs.removeLang(id);
     }
+    async restoreLang(id) {
+        return await this.langs.restoreLang(id);
+    }
     async deleteLang(id) {
         return await this.langs.deleteLang(id);
     }
@@ -138,6 +158,9 @@ let AdminController = class AdminController {
     }
     async removeTheme(id) {
         return await this.themes.removeTheme(id);
+    }
+    async restoreTheme(id) {
+        return await this.themes.restoreTheme(id);
     }
     async deleteTheme(id) {
         return await this.themes.deleteTheme(id);
@@ -157,6 +180,9 @@ let AdminController = class AdminController {
     async removeGroup(id) {
         return await this.groups.removeGroup(id);
     }
+    async restoreGroup(id) {
+        return await this.groups.restoreGroup(id);
+    }
     async deleteGroup(id) {
         return await this.groups.deleteGroup(id);
     }
@@ -175,6 +201,9 @@ let AdminController = class AdminController {
     async removeTitle(id) {
         return await this.titles.removeTitle(id);
     }
+    async restoreTitle(id) {
+        return await this.titles.restoreTitle(id);
+    }
     async deleteTitle(id) {
         return await this.titles.deleteTitle(id);
     }
@@ -187,17 +216,23 @@ let AdminController = class AdminController {
     async getReviews(page = 1) {
         return await this.reviews.getReviewAll({ withDeleted: true, limit: this.countRows, offset: (page - 1) * this.countRows });
     }
+    async getReview(reviewId) {
+        return await this.reviews.getReviewOne({ withDeleted: true, reviewId });
+    }
     async getShortReviews() {
         return await this.reviews.getShortReviewAll();
     }
-    async addReview(description, text, authorRating, userId, titleId, groupId, draft, tags) {
-        return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags);
+    async addReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked) {
+        return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
     }
-    async editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags) {
-        return await this.reviews.editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags);
+    async editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked) {
+        return await this.reviews.editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
     }
     async removeReview(id) {
         return await this.reviews.removeReview(id);
+    }
+    async restoreReview(id) {
+        return await this.reviews.restoreReview(id);
     }
     async deleteReview(id) {
         return await this.reviews.deleteReview(id);
@@ -217,6 +252,9 @@ let AdminController = class AdminController {
     async removeImage(id) {
         return await this.images.removeImage(id);
     }
+    async restoreImage(id) {
+        return await this.images.restoreImage(id);
+    }
     async deleteImage(id) {
         return await this.images.deleteImage(id);
     }
@@ -231,6 +269,9 @@ let AdminController = class AdminController {
     }
     async removeTag(id) {
         return await this.tags.removeTag(id);
+    }
+    async restoreTag(id) {
+        return await this.tags.restoreTag(id);
     }
     async deleteTag(id) {
         return await this.tags.deleteTag(id);
@@ -250,6 +291,9 @@ let AdminController = class AdminController {
     async removeRating(id) {
         return await this.ratings.removeRating(id);
     }
+    async restoreRating(id) {
+        return await this.ratings.restoreRating(id);
+    }
     async deleteRating(id) {
         return await this.ratings.deleteRating(id);
     }
@@ -264,6 +308,9 @@ let AdminController = class AdminController {
     }
     async removeLike(id) {
         return await this.likes.removeLike(id);
+    }
+    async restoreLike(id) {
+        return await this.likes.restoreLike(id);
     }
     async deleteLike(id) {
         return await this.likes.deleteLike(id);
@@ -280,10 +327,27 @@ let AdminController = class AdminController {
     async removeComment(id) {
         return await this.comments.removeComment(id);
     }
+    async restoreComment(id) {
+        return await this.comments.restoreComment(id);
+    }
     async deleteComment(id) {
         return await this.comments.deleteComment(id);
     }
 };
+__decorate([
+    (0, common_1.Get)('/refresh-tokens'),
+    __param(0, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getRefreshTokens", null);
+__decorate([
+    (0, common_1.Post)('/refresh-tokens/delete'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteRefreshToken", null);
 __decorate([
     (0, common_1.Get)('/users'),
     __param(0, (0, common_1.Query)('page')),
@@ -296,16 +360,20 @@ __decorate([
     __param(0, (0, common_1.Body)('user')),
     __param(1, (0, common_1.Body)('password')),
     __param(2, (0, common_1.Body)('email')),
+    __param(3, (0, common_1.Body)('first_name')),
+    __param(4, (0, common_1.Body)('last_name')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "addUser", null);
 __decorate([
     (0, common_1.Post)('/users/add-social'),
     __param(0, (0, common_1.Body)('social_id')),
     __param(1, (0, common_1.Body)('vendor')),
+    __param(2, (0, common_1.Body)('soft_create')),
+    __param(3, (0, common_1.Body)('displayName')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, Boolean, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "addSocialUser", null);
 __decorate([
@@ -328,6 +396,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeUser", null);
+__decorate([
+    (0, common_1.Post)('/users/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreUser", null);
 __decorate([
     (0, common_1.Post)('/users/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -380,12 +455,13 @@ __decorate([
 __decorate([
     (0, common_1.Post)('/user-info/edit'),
     __param(0, (0, common_1.Body)('id')),
-    __param(1, (0, common_1.Body)('first_name')),
-    __param(2, (0, common_1.Body)('last_name')),
-    __param(3, (0, common_1.Body)('theme')),
-    __param(4, (0, common_1.Body)('lang')),
+    __param(1, (0, common_1.Body)('userId')),
+    __param(2, (0, common_1.Body)('first_name')),
+    __param(3, (0, common_1.Body)('last_name')),
+    __param(4, (0, common_1.Body)('theme')),
+    __param(5, (0, common_1.Body)('lang')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String, String, Number, Number]),
+    __metadata("design:paramtypes", [Number, Number, String, String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "editUserInfo", null);
 __decorate([
@@ -395,6 +471,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeUserInfo", null);
+__decorate([
+    (0, common_1.Post)('/user-info/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreUserInfo", null);
 __decorate([
     (0, common_1.Post)('/user-info/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -435,6 +518,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeRole", null);
+__decorate([
+    (0, common_1.Post)('/roles/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreRole", null);
 __decorate([
     (0, common_1.Post)('/roles/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -482,6 +572,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeLang", null);
 __decorate([
+    (0, common_1.Post)('/langs/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreLang", null);
+__decorate([
     (0, common_1.Post)('/langs/delete'),
     __param(0, (0, common_1.Body)('id')),
     __metadata("design:type", Function),
@@ -528,6 +625,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeTheme", null);
 __decorate([
+    (0, common_1.Post)('/themes/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreTheme", null);
+__decorate([
     (0, common_1.Post)('/themes/delete'),
     __param(0, (0, common_1.Body)('id')),
     __metadata("design:type", Function),
@@ -571,6 +675,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeGroup", null);
+__decorate([
+    (0, common_1.Post)('/groups/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreGroup", null);
 __decorate([
     (0, common_1.Post)('/groups/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -616,6 +727,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeTitle", null);
 __decorate([
+    (0, common_1.Post)('/titles/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreTitle", null);
+__decorate([
     (0, common_1.Post)('/titles/delete'),
     __param(0, (0, common_1.Body)('id')),
     __metadata("design:type", Function),
@@ -644,6 +762,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getReviews", null);
 __decorate([
+    (0, common_1.Get)('/review-full'),
+    __param(0, (0, common_1.Query)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getReview", null);
+__decorate([
     (0, common_1.Get)('/reviews-short'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -659,8 +784,9 @@ __decorate([
     __param(5, (0, common_1.Body)('groupId')),
     __param(6, (0, common_1.Body)('draft')),
     __param(7, (0, common_1.Body)('tags')),
+    __param(8, (0, common_1.Body)('blocked')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Number, Number, Number, Number, Boolean, Array]),
+    __metadata("design:paramtypes", [String, String, Number, Number, Number, Number, Boolean, Array, Boolean]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "addReview", null);
 __decorate([
@@ -674,8 +800,9 @@ __decorate([
     __param(6, (0, common_1.Body)('groupId')),
     __param(7, (0, common_1.Body)('draft')),
     __param(8, (0, common_1.Body)('tags')),
+    __param(9, (0, common_1.Body)('blocked')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String, String, Number, Number, Number, Number, Boolean, Array]),
+    __metadata("design:paramtypes", [Number, String, String, Number, Number, Number, Number, Boolean, Array, Boolean]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "editReview", null);
 __decorate([
@@ -685,6 +812,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeReview", null);
+__decorate([
+    (0, common_1.Post)('/reviews/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreReview", null);
 __decorate([
     (0, common_1.Post)('/reviews/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -731,6 +865,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeImage", null);
 __decorate([
+    (0, common_1.Post)('/images/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreImage", null);
+__decorate([
     (0, common_1.Post)('/images/delete'),
     __param(0, (0, common_1.Body)('id')),
     __metadata("design:type", Function),
@@ -766,6 +907,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeTag", null);
+__decorate([
+    (0, common_1.Post)('/tags/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreTag", null);
 __decorate([
     (0, common_1.Post)('/tags/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -813,6 +961,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeRating", null);
 __decorate([
+    (0, common_1.Post)('/ratings/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreRating", null);
+__decorate([
     (0, common_1.Post)('/ratings/delete'),
     __param(0, (0, common_1.Body)('id')),
     __metadata("design:type", Function),
@@ -852,6 +1007,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeLike", null);
+__decorate([
+    (0, common_1.Post)('/likes/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreLike", null);
 __decorate([
     (0, common_1.Post)('/likes/delete'),
     __param(0, (0, common_1.Body)('id')),
@@ -897,6 +1059,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "removeComment", null);
 __decorate([
+    (0, common_1.Post)('/comments/restore'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "restoreComment", null);
+__decorate([
     (0, common_1.Post)('/comments/delete'),
     __param(0, (0, common_1.Body)('id')),
     __metadata("design:type", Function),
@@ -917,7 +1086,8 @@ AdminController = __decorate([
         tags_service_1.TagsService,
         ratings_service_1.RatingsService,
         likes_service_1.LikesService,
-        comments_service_1.CommentsService])
+        comments_service_1.CommentsService,
+        refresh_token_service_1.RefreshTokenService])
 ], AdminController);
 exports.AdminController = AdminController;
 //# sourceMappingURL=admin.controller.js.map

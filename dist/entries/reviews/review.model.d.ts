@@ -11,6 +11,7 @@ interface CreateReview {
     userId: number;
     titleGroupId: number;
     draft: boolean;
+    blocked: boolean;
 }
 export declare class Review extends Model<Review, CreateReview> {
     id: number;
@@ -26,5 +27,6 @@ export declare class Review extends Model<Review, CreateReview> {
     groupTitle: TitleGroups;
     ratings: Rating;
     likes: Like;
+    searchId: string;
 }
 export {};

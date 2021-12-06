@@ -42,14 +42,13 @@ let ReviewSearchService = class ReviewSearchService {
                     multi_match: {
                         query: text,
                         fields: [
-                            'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments'
+                            'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments.comment'
                         ]
                     }
                 }
             }
         });
         const hits = body.hits.hits;
-        return hits;
         return hits.reduce((acc, entry) => {
             acc.ids.push(entry._source.id);
             acc.searchIds.push(entry._id);
@@ -168,6 +167,26 @@ let ReviewSearchService = class ReviewSearchService {
             }
         });
     }
+    async updateReviewComment(reviewId, commentId, comment) {
+        return await this.elasticsearchService.updateByQuery({
+            index: this.index,
+            body: {
+                query: {
+                    match: {
+                        id: reviewId,
+                    }
+                },
+                script: {
+                    source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+                    lang: "painless",
+                    params: {
+                        commentId: commentId,
+                        comment: comment
+                    }
+                }
+            }
+        });
+    }
     async addReviewCommentWithId(id, commentId, comment) {
         return await this.elasticsearchService.updateByQuery({
             index: this.index,
@@ -204,6 +223,26 @@ let ReviewSearchService = class ReviewSearchService {
                     lang: "painless",
                     params: {
                         commentId: commentId
+                    }
+                }
+            }
+        });
+    }
+    async updateReviewCommentWithId(id, commentId, comment) {
+        return await this.elasticsearchService.updateByQuery({
+            index: this.index,
+            body: {
+                query: {
+                    terms: {
+                        _id: [id],
+                    }
+                },
+                script: {
+                    source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+                    lang: "painless",
+                    params: {
+                        commentId: commentId,
+                        comment: comment
                     }
                 }
             }

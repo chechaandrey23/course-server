@@ -57,10 +57,11 @@ let AuthController = class AuthController {
         return { id: user.id, roles: user.roles, accessToken: access.token };
     }
     async refresh(req) {
+        var _a;
         const user = req.user;
         const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
         const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
-        await this.refreshTokenService.addRefreshToken(user.id, refresh.token, config_1.JWT_REFRESH_EXPIRATION_TIME);
+        await this.refreshTokenService.replaceRefreshToken(user.id, (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.Refresh, refresh.token, config_1.JWT_REFRESH_EXPIRATION_TIME);
         req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
         return { id: user.id, roles: user.roles, accessToken: access.token };
     }

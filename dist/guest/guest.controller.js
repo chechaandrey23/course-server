@@ -62,6 +62,15 @@ let GuestController = class GuestController {
     async getShortEditorUsers(page = 1) {
         return await this.users.getShortEditorUserAll(this.countEditorRows, (page - 1) * this.countEditorRows);
     }
+    async getGroupAll() {
+        return await this.groups.getShortGroupAll();
+    }
+    async getTitlePart(query) {
+        return await this.titles.getPartTitleAll(this.countRows, 0, query);
+    }
+    async getTagPart(query) {
+        return await this.tags.getPartTagAll(this.countRows, 0, query);
+    }
 };
 __decorate([
     (0, common_1.Get)(['/reviews']),
@@ -98,6 +107,26 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getShortEditorUsers", null);
+__decorate([
+    (0, common_1.Get)('/groups'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], GuestController.prototype, "getGroupAll", null);
+__decorate([
+    (0, common_1.Get)('/part-titles/:query'),
+    __param(0, (0, common_1.Param)('query')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], GuestController.prototype, "getTitlePart", null);
+__decorate([
+    (0, common_1.Get)('/part-tags/:query'),
+    __param(0, (0, common_1.Param)('query')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], GuestController.prototype, "getTagPart", null);
 GuestController = __decorate([
     (0, common_1.Controller)('/guest'),
     __metadata("design:paramtypes", [users_service_1.UsersService,

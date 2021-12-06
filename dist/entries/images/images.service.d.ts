@@ -17,6 +17,10 @@ export declare class ImagesService {
         id: number;
         deletedAt: string;
     }>;
+    restoreImage(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteImage(id: number): Promise<{
         id: number;
     }>;

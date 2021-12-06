@@ -27,8 +27,9 @@ const userinfo_model_1 = require("../userinfos/userinfo.model");
 const theme_model_1 = require("../themes/theme.model");
 const lang_model_1 = require("../langs/lang.model");
 const like_model_1 = require("../likes/like.model");
+const refresh_token_model_1 = require("../refreshtoken/refresh.token.model");
 let UsersService = class UsersService {
-    constructor(sequelize, roles, users, userInfos, themes, langs, userRoles) {
+    constructor(sequelize, roles, users, userInfos, themes, langs, userRoles, refreshToken) {
         this.sequelize = sequelize;
         this.roles = roles;
         this.users = users;
@@ -36,6 +37,7 @@ let UsersService = class UsersService {
         this.themes = themes;
         this.langs = langs;
         this.userRoles = userRoles;
+        this.refreshToken = refreshToken;
     }
     async hashedPassword(password) {
         return await bcrypt.hash(config_1.PASSWORD_SALT_SECRET_1 + password + config_1.PASSWORD_SALT_SECRET_2, config_1.PASSWORD_SALT_ROUNDS);
@@ -67,9 +69,10 @@ let UsersService = class UsersService {
                     throw new common_1.ConflictException({ user, reason: `User "${user}" already exists` });
                 let res1 = await this.users.create({ user, email, password: await this.hashedPassword(password) }, { transaction: t });
                 await this._createUserOther(t, res1.id, [first_name, last_name]);
-                return await this.users.findOne({ include: [{ model: role_model_1.Role, through: { where: { selected: true } } }], attributes: { include: [
+                const _user = await this.users.findOne({ include: [{ model: role_model_1.Role, through: { where: { selected: true } } }], attributes: { include: [
                             [sequelize_typescript_1.Sequelize.literal(`(SELECT COUNT(*) FROM "${like_model_1.Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
                         ], exclude: ['password'] }, where: { id: res1.id }, transaction: t });
+                return _user;
             });
         }
         catch (e) {
@@ -84,10 +87,13 @@ let UsersService = class UsersService {
                 if (res) {
                     if (res.blocked)
                         throw new common_1.NotAcceptableException(`User with social id "${social_id}" - is BANNED`);
-                    if (softCreate) {
-                        return await this.users.findOne({ include: [{ model: role_model_1.Role, through: { where: { selected: true } } }], attributes: { include: [
+                    if (!!softCreate) {
+                        const _user = await this.users.findOne({ include: [{ model: role_model_1.Role, through: { where: { selected: true } } }], attributes: { include: [
                                     [sequelize_typescript_1.Sequelize.literal(`(SELECT COUNT(*) FROM "${like_model_1.Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
-                                ], exclude: ['password'] }, where: { id: res.id }, transaction: t });
+                                ], exclude: ['password'] }, where: { id: res.getDataValue('id') }, transaction: t });
+                        if (!_user)
+                            throw new common_1.ConflictException({ social_id, reason: `User with social id "${social_id}" is in the process of being removed and cannot be used` });
+                        return _user;
                     }
                     else {
                         throw new common_1.ConflictException({ social_id, reason: `User with social id "${social_id}" already exists` });
@@ -148,9 +154,15 @@ let UsersService = class UsersService {
                     newData['email'] = email;
                     newData['activated'] = false;
                 }
-                await this.userRoles.update({ selected: false }, { where: { userId: id }, transaction: t });
-                await this.userRoles.update({ selected: true }, { where: { userId: id, roleId: { [sequelize_2.Op.in]: roles } }, transaction: t });
-                let res1 = await this.users.update(Object.assign(Object.assign({}, newData), { blocked, activated }), { where: { id }, transaction: t });
+                const changedRoles = await this.changedRoles(t, roles, id);
+                if (changedRoles) {
+                    await this.userRoles.update({ selected: false }, { where: { userId: id }, transaction: t });
+                    await this.userRoles.update({ selected: true }, { where: { userId: id, roleId: { [sequelize_2.Op.in]: roles } }, transaction: t });
+                }
+                if (blocked || changedRoles) {
+                    await this.refreshToken.update({ RT1: null, dateEndRT1: null }, { where: { userId: id } });
+                }
+                let res1 = await this.users.update(Object.assign(Object.assign({}, newData), { blocked: !!blocked, activated }), { where: { id }, transaction: t });
                 return await this.users.findOne({ include: [{ model: role_model_1.Role, through: { where: { selected: true } } }], attributes: { include: [
                             [sequelize_typescript_1.Sequelize.literal(`(SELECT COUNT(*) FROM "${like_model_1.Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
                         ], exclude: ['password'] }, where: { id }, transaction: t });
@@ -159,6 +171,10 @@ let UsersService = class UsersService {
         catch (e) {
             (0, handler_error_1.handlerError)(e, { id });
         }
+    }
+    async changedRoles(t, roles, userId) {
+        let res = await this.userRoles.findAll({ transaction: t, where: { userId: userId, selected: true } });
+        return !(roles.length === res.length && res.every((item) => !!~roles.indexOf(item.getDataValue('roleId'))));
     }
     async changePassword(id, prevPassword, newPassword) { }
     async removeUser(id) {
@@ -173,9 +189,22 @@ let UsersService = class UsersService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreUser(id) {
+        try {
+            return await this.sequelize.transaction({}, async (t) => {
+                await this.userInfos.restore({ where: { userId: id }, transaction: t });
+                await this.users.restore({ where: { id } });
+                return { id: id, deletedAt: null };
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteUser(id) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
+                await this.refreshToken.destroy({ where: { userId: id }, transaction: t, force: true });
                 await this.userInfos.destroy({ where: { userId: id }, transaction: t, force: true });
                 await this.userRoles.destroy({ where: { userId: id }, transaction: t, force: true });
                 await this.users.destroy({ where: { id }, transaction: t, force: true });
@@ -209,7 +238,7 @@ let UsersService = class UsersService {
         return data;
     }
     async getUserAll(count, offset = 0, withDeleted = false) {
-        return await this.users.findAll({ include: [{ model: role_model_1.Role, paranoid: !withDeleted }], attributes: {
+        return await this.users.findAll({ include: [{ model: role_model_1.Role, through: { where: { selected: true } }, paranoid: !withDeleted }], attributes: {
                 include: [
                     [sequelize_typescript_1.Sequelize.literal(`(SELECT COUNT(*) FROM "${like_model_1.Like.tableName.toString()}" WHERE "like"=true AND "userId"="${this.users.name.toString()}"."id")`), "countUserLike"]
                 ],
@@ -234,7 +263,7 @@ let UsersService = class UsersService {
         return await this.users.findAll({ include: [{ model: userinfo_model_1.UserInfo, attributes: ['first_name', 'last_name'] }, { model: role_model_1.Role, through: { where: { selected: true } }, where: { role: this.getRoleUserUser() }, paranoid: false }], attributes: ['id', 'user', 'social_id'], offset: offset, limit: count });
     }
     async getUserRoleAll(count, offset = 0) {
-        return await this.userRoles.findAll({ include: [], offset: offset, limit: count });
+        return await this.userRoles.findAll({ include: [{ model: user_model_1.User, attributes: ['id', 'user', 'social_id'] }, role_model_1.Role], offset: offset, limit: count });
     }
 };
 UsersService = __decorate([
@@ -245,7 +274,8 @@ UsersService = __decorate([
     __param(4, (0, sequelize_1.InjectModel)(theme_model_1.Theme)),
     __param(5, (0, sequelize_1.InjectModel)(lang_model_1.Lang)),
     __param(6, (0, sequelize_1.InjectModel)(user_roles_model_1.UserRoles)),
-    __metadata("design:paramtypes", [sequelize_typescript_1.Sequelize, Object, Object, Object, Object, Object, Object])
+    __param(7, (0, sequelize_1.InjectModel)(refresh_token_model_1.RefreshToken)),
+    __metadata("design:paramtypes", [sequelize_typescript_1.Sequelize, Object, Object, Object, Object, Object, Object, Object])
 ], UsersService);
 exports.UsersService = UsersService;
 //# sourceMappingURL=users.service.js.map

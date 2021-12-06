@@ -41,8 +41,8 @@ let ImagesService = class ImagesService {
                     throw new common_1.ConflictException({ userId, reason: `User (userId: ${userId}) does not exist` });
                 let newData = [];
                 for (const image of images) {
-                    console.log(image);
-                    const fileName = `${(0, uuid_1.v4)()}.${image.originalname.split('.').at(-1)}`;
+                    const extNameArr = image.originalname.split('.');
+                    const fileName = `${(0, uuid_1.v4)()}.${extNameArr[extNameArr.length - 1]}`;
                     const linkFilename = await this.upLoad(fileName, image.buffer);
                     newData.push({ userId, url: linkFilename, filename: fileName, vendor: 'google.bucket' });
                 }
@@ -91,13 +91,22 @@ let ImagesService = class ImagesService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreImage(id) {
+        try {
+            await this.images.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteImage(id) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
                 let res = await this.images.findOne({ where: { id }, paranoid: false, transaction: t });
                 if (!res)
                     throw new common_1.ConflictException({ id, reason: `Image record id="${id}" NOT FOUND` });
-                await this.storageGoogleBucket.file(res.getDataValue('filename')).delete();
+                let gres = await this.storageGoogleBucket.file(res.getDataValue('filename')).delete();
                 await this.images.destroy({ where: { id }, transaction: t, force: true });
                 return { id: id };
             });

@@ -61,6 +61,15 @@ export class CommentsService {
 		}
 	}
 
+	public async restoreComment(id: number) {
+		try {
+			await this.comments.restore({where: {id}});
+			return {id: id, deletedAt: null}
+		} catch(e) {
+			handlerError(e, {id});
+		}
+	}
+
 	public async deleteComment(id: number) {
 		try {
 			await this.comments.destroy({where: {id}/*, transaction: t*/, force: true});

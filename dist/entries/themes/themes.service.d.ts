@@ -10,6 +10,10 @@ export declare class ThemesService {
         id: number;
         deletedAt: string;
     }>;
+    restoreTheme(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteTheme(id: number): Promise<{
         id: number;
     }>;

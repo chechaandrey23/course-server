@@ -36,10 +36,7 @@ export declare class EditorController {
         id: number;
         deletedAt: string;
     }>;
-    getGroupAll(): Promise<import("../entries/groups/group.model").Group[]>;
-    getTitlePart(query: string): Promise<import("../entries/titles/title.model").Title[]>;
     newTitle(title: string, description: string): Promise<import("../entries/titles/title.model").Title>;
-    getTagPart(query: string): Promise<import("../entries/tags/tag.model").Tag[]>;
     newTag(tag: string): Promise<import("../entries/tags/tag.model").Tag>;
     protected countImageRows: number;
     getImageAll(page?: number): Promise<import("../entries/images/image.model").Image[]>;

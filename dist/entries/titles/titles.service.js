@@ -71,6 +71,15 @@ let TitlesService = class TitlesService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreTitle(id) {
+        try {
+            await this.titles.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteTitle(id) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
@@ -95,7 +104,7 @@ let TitlesService = class TitlesService {
                 } } });
     }
     async getTitleGroupAll(count, offset = 0) {
-        return await this.titleGroups.findAll({ include: [], offset: offset, limit: count });
+        return await this.titleGroups.findAll({ include: [title_model_1.Title, group_model_1.Group], offset: offset, limit: count });
     }
 };
 TitlesService = __decorate([

@@ -30,7 +30,7 @@ export declare class UserController {
     getDescriptionOrderReviews(req: any, page: number, tags: number[], titles: number[], groups: number[], authors: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
     getFullReview(req: any, id: number): Promise<import("../entries/reviews/review.model").Review>;
     getUserObject(req: any): Promise<import("../entries/users/user.model").User>;
-    setUserSettings(id: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
+    setUserSettings(req: any, id: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
     getUserLangAll(): Promise<import("../entries/langs/lang.model").Lang[]>;
     getUserThemeAll(): Promise<import("../entries/themes/theme.model").Theme[]>;
     serUserRating(req: any, reviewId: number, rating: number): Promise<import("../entries/ratings/rating.model").Rating>;

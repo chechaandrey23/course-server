@@ -20,10 +20,13 @@ const sequelize_2 = require("sequelize");
 const handler_error_1 = require("../../helpers/handler.error");
 const tag_model_1 = require("./tag.model");
 const review_model_1 = require("../reviews/review.model");
+const review_tags_model_1 = require("../reviews/review.tags.model");
 let TagsService = class TagsService {
-    constructor(sequelize, tags) {
+    constructor(sequelize, tags, reviews, reviewTags) {
         this.sequelize = sequelize;
         this.tags = tags;
+        this.reviews = reviews;
+        this.reviewTags = reviewTags;
     }
     async createTag(tag) {
         try {
@@ -32,12 +35,18 @@ let TagsService = class TagsService {
                 if (res)
                     throw new common_1.ConflictException({ tag, reason: `Tag "${tag}" already exists` });
                 let res1 = await this.tags.create({ tag }, { transaction: t });
+                await this._patchReviewTag(t, res1.id);
                 return await this.tags.findOne(this.buildQuery({ userId: res1.getDataValue('id'), transaction: t }));
             });
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e);
         }
+    }
+    async _patchReviewTag(t, tagId) {
+        let res2 = await this.reviews.findAll({ attributes: ['id'], transaction: t, paranoid: false });
+        let newData = res2.map((entry) => { return { reviewId: entry.getDataValue('id'), tagId, selected: false }; });
+        let res3 = await this.reviewTags.bulkCreate(newData, { transaction: t });
     }
     async editTag(id, tag) {
         try {
@@ -59,10 +68,22 @@ let TagsService = class TagsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreTag(id) {
+        try {
+            await this.tags.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteTag(id) {
         try {
-            await this.tags.destroy({ where: { id }, force: true });
-            return { id: id };
+            return await this.sequelize.transaction({}, async (t) => {
+                await this.reviewTags.destroy({ where: { tagId: id }, transaction: t, force: true });
+                await this.tags.destroy({ where: { id }, force: true });
+                return { id: id };
+            });
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e, { id });
@@ -76,7 +97,7 @@ let TagsService = class TagsService {
         let transaction = opts.transaction;
         let query = { raw: true, includeIgnoreAttributes: false, subQuery: false, paranoid,
             attributes: { include: [[sequelize_typescript_1.Sequelize.fn('COUNT', sequelize_typescript_1.Sequelize.col('reviews.id')), 'countReview']], },
-            include: [{ model: review_model_1.Review, required: false, attributes: [], paranoid },],
+            include: [{ model: review_model_1.Review, required: false, attributes: [], through: { where: { selected: true } }, paranoid },],
             where: {}, group: ['Tag.id'], transaction
         };
         let otherQuery = {};
@@ -103,7 +124,9 @@ let TagsService = class TagsService {
 TagsService = __decorate([
     (0, common_1.Injectable)(),
     __param(1, (0, sequelize_1.InjectModel)(tag_model_1.Tag)),
-    __metadata("design:paramtypes", [sequelize_typescript_1.Sequelize, Object])
+    __param(2, (0, sequelize_1.InjectModel)(review_model_1.Review)),
+    __param(3, (0, sequelize_1.InjectModel)(review_tags_model_1.ReviewTags)),
+    __metadata("design:paramtypes", [sequelize_typescript_1.Sequelize, Object, Object, Object])
 ], TagsService);
 exports.TagsService = TagsService;
 //# sourceMappingURL=tags.service.js.map

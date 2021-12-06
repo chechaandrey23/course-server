@@ -60,6 +60,15 @@ let ThemesService = class ThemesService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreTheme(id) {
+        try {
+            await this.themes.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteTheme(id) {
         try {
             await this.themes.destroy({ where: { id }, force: true });

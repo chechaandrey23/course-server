@@ -11,10 +11,14 @@ export declare class UserInfosService {
     private users;
     constructor(sequelize: Sequelize, userInfos: typeof UserInfo, themes: typeof Theme, langs: typeof Lang, users: typeof User);
     createUserInfo(userId: number): Promise<UserInfo>;
-    editUserInfo(id: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<UserInfo>;
+    editUserInfo(id: number, userId: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<UserInfo>;
     removeUserInfo(id: number): Promise<{
         id: number;
         deletedAt: string;
+    }>;
+    restoreUserInfo(id: number): Promise<{
+        id: number;
+        deletedAt: any;
     }>;
     deleteUserInfo(id: number): Promise<{
         id: number;

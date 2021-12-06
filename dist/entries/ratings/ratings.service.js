@@ -74,6 +74,15 @@ let RatingsService = class RatingsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreRating(id) {
+        try {
+            await this.ratings.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteRating(id) {
         try {
             await this.ratings.destroy({ where: { id }, force: true });

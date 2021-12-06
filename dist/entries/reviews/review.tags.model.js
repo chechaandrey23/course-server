@@ -21,10 +21,22 @@ __decorate([
     __metadata("design:type", Number)
 ], ReviewTags.prototype, "reviewId", void 0);
 __decorate([
+    (0, sequelize_typescript_1.BelongsTo)(() => review_model_1.Review),
+    __metadata("design:type", review_model_1.Review)
+], ReviewTags.prototype, "review", void 0);
+__decorate([
     (0, sequelize_typescript_1.ForeignKey)(() => tag_model_1.Tag),
     (0, sequelize_typescript_1.Column)({ type: sequelize_typescript_1.DataType.INTEGER }),
     __metadata("design:type", Number)
 ], ReviewTags.prototype, "tagId", void 0);
+__decorate([
+    (0, sequelize_typescript_1.BelongsTo)(() => tag_model_1.Tag),
+    __metadata("design:type", tag_model_1.Tag)
+], ReviewTags.prototype, "tag", void 0);
+__decorate([
+    (0, sequelize_typescript_1.Column)({ type: sequelize_typescript_1.DataType.BOOLEAN, defaultValue: false }),
+    __metadata("design:type", Boolean)
+], ReviewTags.prototype, "selected", void 0);
 ReviewTags = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'review_tags', createdAt: false, updatedAt: false })
 ], ReviewTags);

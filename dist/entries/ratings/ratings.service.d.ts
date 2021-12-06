@@ -10,6 +10,10 @@ export declare class RatingsService {
         id: number;
         deletedAt: string;
     }>;
+    restoreRating(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteRating(id: number): Promise<{
         id: number;
     }>;

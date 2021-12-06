@@ -60,8 +60,8 @@ let UserController = class UserController {
     async getUserObject(req) {
         return await this.users.getUserOne(req.user.id);
     }
-    async setUserSettings(id, first_name, last_name, themeId, langId) {
-        return await this.userInfos.editUserInfo(id, first_name, last_name, themeId, langId);
+    async setUserSettings(req, id, first_name, last_name, themeId, langId) {
+        return await this.userInfos.editUserInfo(id, req.user.id, first_name, last_name, themeId, langId);
     }
     async getUserLangAll() {
         return await this.langs.getShortLangAll();
@@ -116,13 +116,14 @@ __decorate([
 ], UserController.prototype, "getUserObject", null);
 __decorate([
     (0, common_1.Post)('/user-settings'),
-    __param(0, (0, common_1.Body)('id')),
-    __param(1, (0, common_1.Body)('first_name')),
-    __param(2, (0, common_1.Body)('last_name')),
-    __param(3, (0, common_1.Body)('themeId')),
-    __param(4, (0, common_1.Body)('langId')),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)('id')),
+    __param(2, (0, common_1.Body)('first_name')),
+    __param(3, (0, common_1.Body)('last_name')),
+    __param(4, (0, common_1.Body)('themeId')),
+    __param(5, (0, common_1.Body)('langId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, String, String, Number, Number]),
+    __metadata("design:paramtypes", [Object, Number, String, String, Number, Number]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "setUserSettings", null);
 __decorate([

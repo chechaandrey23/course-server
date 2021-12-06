@@ -67,8 +67,8 @@ export class UserController {
 	}
 
 	@Post('/user-settings')
-	public async setUserSettings(@Body('id') id: number, @Body('first_name') first_name: string, @Body('last_name') last_name: string, @Body('themeId') themeId: number, @Body('langId') langId: number) {
-		return await this.userInfos.editUserInfo(id, first_name, last_name, themeId, langId);
+	public async setUserSettings(@Request() req, @Body('id') id: number, @Body('first_name') first_name: string, @Body('last_name') last_name: string, @Body('themeId') themeId: number, @Body('langId') langId: number) {
+		return await this.userInfos.editUserInfo(id, req.user.id, first_name, last_name, themeId, langId);
 	}
 
 	@Get('/langs')

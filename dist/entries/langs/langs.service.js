@@ -60,6 +60,15 @@ let LangsService = class LangsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async restoreLang(id) {
+        try {
+            await this.langs.restore({ where: { id } });
+            return { id: id, deletedAt: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
     async deleteLang(id) {
         try {
             await this.langs.destroy({ where: { id }, force: true });

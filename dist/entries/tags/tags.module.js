@@ -11,12 +11,14 @@ const common_1 = require("@nestjs/common");
 const sequelize_1 = require("@nestjs/sequelize");
 const tags_service_1 = require("./tags.service");
 const tag_model_1 = require("./tag.model");
+const review_model_1 = require("../reviews/review.model");
+const review_tags_model_1 = require("../reviews/review.tags.model");
 let TagsModule = class TagsModule {
 };
 TagsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            sequelize_1.SequelizeModule.forFeature([tag_model_1.Tag]),
+            sequelize_1.SequelizeModule.forFeature([tag_model_1.Tag, review_model_1.Review, review_tags_model_1.ReviewTags]),
         ],
         controllers: [],
         providers: [

@@ -10,6 +10,10 @@ export declare class CommentsService {
         id: number;
         deletedAt: string;
     }>;
+    restoreComment(id: number): Promise<{
+        id: number;
+        deletedAt: any;
+    }>;
     deleteComment(id: number): Promise<{
         id: number;
     }>;

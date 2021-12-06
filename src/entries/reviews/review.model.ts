@@ -9,13 +9,13 @@ import {Rating} from '../ratings/rating.model';
 import {Like} from '../likes/like.model';
 
 interface CreateReview {
-	//title: string;
 	description: string;
 	text: string;
 	authorRating: number;
 	userId: number;
 	titleGroupId: number;
 	draft: boolean;
+	blocked: boolean;
 }
 
 @Table({tableName: 'reviews', timestamps: true, paranoid: true, deletedAt: true})
@@ -62,6 +62,6 @@ export class Review extends Model<Review, CreateReview> {
 	@HasMany(() => Like)
 	likes: Like
 
-	//@HasMany(() => Image)
-	//images: Image[];
+	@Column({type: DataType.STRING})
+	searchId: string;
 }

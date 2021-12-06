@@ -17,6 +17,8 @@ import {RatingsService} from '../entries/ratings/ratings.service';
 import {LikesService} from '../entries/likes/likes.service';
 import {CommentsService} from '../entries/comments/comments.service';
 
+import {RefreshTokenService} from '../entries/refreshtoken/refresh.token.service';
+
 @Controller('admin/api')
 export class AdminController {
 	constructor(
@@ -32,10 +34,24 @@ export class AdminController {
 		private tags: TagsService,
 		private ratings: RatingsService,
 		private likes: LikesService,
-		private comments: CommentsService
+		private comments: CommentsService,
+		private refreshTokens: RefreshTokenService
 	) {}
 
 	protected readonly countRows: number = 20;
+
+	// refresh Token
+	@Get('/refresh-tokens')
+	public async getRefreshTokens(@Query('page') page: number = 1) {
+		return await this.refreshTokens.refreshTokenGetAll(this.countRows, (page-1)*this.countRows, true);
+	}
+
+	@Post('/refresh-tokens/delete')
+	public async deleteRefreshToken(@Body('id') id: number) {
+		return await this.refreshTokens.refreshTokenDelete(id);
+	}
+
+
 
 	// user
 	@Get('/users')
@@ -44,13 +60,13 @@ export class AdminController {
 	}
 
 	@Post('/users/add')
-	public async addUser(@Body('user') user: string, @Body('password') password: string, @Body('email') email: string) {
-		return await this.users.createUser(user, password, email);
+	public async addUser(@Body('user') user: string, @Body('password') password: string, @Body('email') email: string, @Body('first_name') first_name: string, @Body('last_name') last_name: string) {
+		return await this.users.createUser(user, password, email, first_name, last_name);
 	}
 
 	@Post('/users/add-social')
-	public async addSocialUser(@Body('social_id') social_id: string, @Body('vendor') vendor: string) {
-		return await this.users.createSocialUser(social_id, vendor);
+	public async addSocialUser(@Body('social_id') social_id: string, @Body('vendor') vendor: string, @Body('soft_create') soft_create: boolean, @Body('displayName') displayName: string) {
+		return await this.users.createSocialUser(social_id, vendor, soft_create, displayName);
 	}
 
 	@Post('/users/edit')
@@ -61,6 +77,11 @@ export class AdminController {
 	@Post('/users/remove')
 	public async removeUser(@Body('id') id: number) {
 		return await this.users.removeUser(id);
+	}
+
+	@Post('/users/restore')
+	public async restoreUser(@Body('id') id: number) {
+		return await this.users.restoreUser(id);
 	}
 
 	@Post('/users/delete')
@@ -102,13 +123,18 @@ export class AdminController {
 	}
 
 	@Post('/user-info/edit')
-	public async editUserInfo(@Body('id') id: number, @Body('first_name') first_name: string, @Body('last_name') last_name: string, @Body('theme') themeId: number, @Body('lang') langId: number) {
-		return await this.userInfos.editUserInfo(id, first_name, last_name, themeId, langId);
+	public async editUserInfo(@Body('id') id: number, @Body('userId') userId: number, @Body('first_name') first_name: string, @Body('last_name') last_name: string, @Body('theme') themeId: number, @Body('lang') langId: number) {
+		return await this.userInfos.editUserInfo(id, userId, first_name, last_name, themeId, langId);
 	}
 
 	@Post('/user-info/remove')
 	public async removeUserInfo(@Body('id') id: number) {
 		return await this.userInfos.removeUserInfo(id);
+	}
+
+	@Post('/user-info/restore')
+	public async restoreUserInfo(@Body('id') id: number) {
+		return await this.userInfos.restoreUserInfo(id);
 	}
 
 	@Post('/user-info/delete')
@@ -136,6 +162,11 @@ export class AdminController {
 	@Post('/roles/remove')
 	public async removeRole(@Body('id') id: number) {
 		return await this.roles.removeRole(id);
+	}
+
+	@Post('/roles/restore')
+	public async restoreRole(@Body('id') id: number) {
+		return await this.roles.restoreRole(id);
 	}
 
 	@Post('/roles/delete')
@@ -171,6 +202,11 @@ export class AdminController {
 		return await this.langs.removeLang(id);
 	}
 
+	@Post('/langs/restore')
+	public async restoreLang(@Body('id') id: number) {
+		return await this.langs.restoreLang(id);
+	}
+
 	@Post('/langs/delete')
 	public async deleteLang(@Body('id') id: number) {
 		return await this.langs.deleteLang(id);
@@ -202,6 +238,11 @@ export class AdminController {
 	@Post('/themes/remove')
 	public async removeTheme(@Body('id') id: number) {
 		return await this.themes.removeTheme(id);
+	}
+
+	@Post('/themes/restore')
+	public async restoreTheme(@Body('id') id: number) {
+		return await this.themes.restoreTheme(id);
 	}
 
 	@Post('/themes/delete')
@@ -237,6 +278,11 @@ export class AdminController {
 		return await this.groups.removeGroup(id);
 	}
 
+	@Post('/groups/restore')
+	public async restoreGroup(@Body('id') id: number) {
+		return await this.groups.restoreGroup(id);
+	}
+
 	@Post('/groups/delete')
 	public async deleteGroup(@Body('id') id: number) {
 		return await this.groups.deleteGroup(id);
@@ -268,6 +314,11 @@ export class AdminController {
 		return await this.titles.removeTitle(id);
 	}
 
+	@Post('/titles/restore')
+	public async restoreTitle(@Body('id') id: number) {
+		return await this.titles.restoreTitle(id);
+	}
+
 	@Post('/titles/delete')
 	public async deleteTitle(@Body('id') id: number) {
 		return await this.titles.deleteTitle(id);
@@ -290,24 +341,34 @@ export class AdminController {
 		return await this.reviews.getReviewAll({withDeleted: true, limit: this.countRows, offset: (page-1)*this.countRows});
 	}
 
+	@Get('/review-full')
+	public async getReview(@Query('id') reviewId) {
+		return await this.reviews.getReviewOne({withDeleted: true, reviewId});
+	}
+
 	@Get('/reviews-short')
 	public async getShortReviews() {
 		return await this.reviews.getShortReviewAll();
 	}
 
 	@Post('/reviews/add')
-	public async addReview(@Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[]) {
-		return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags);
+	public async addReview(@Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[], @Body('blocked') blocked: boolean) {
+		return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
 	}
 
 	@Post('/reviews/edit')
-	public async editReview(@Body('id') id: number, @Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[]) {
-		return await this.reviews.editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags);
+	public async editReview(@Body('id') id: number, @Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[], @Body('blocked') blocked: boolean) {
+		return await this.reviews.editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
 	}
 
 	@Post('/reviews/remove')
 	public async removeReview(@Body('id') id: number) {
 		return await this.reviews.removeReview(id);
+	}
+
+	@Post('/reviews/restore')
+	public async restoreReview(@Body('id') id: number) {
+		return await this.reviews.restoreReview(id);
 	}
 
 	@Post('/reviews/delete')
@@ -343,6 +404,11 @@ export class AdminController {
 		return await this.images.removeImage(id);
 	}
 
+	@Post('/images/restore')
+	public async restoreImage(@Body('id') id: number) {
+		return await this.images.restoreImage(id);
+	}
+
 	@Post('/images/delete')
 	public async deleteImage(@Body('id') id: number) {
 		return await this.images.deleteImage(id);
@@ -369,6 +435,11 @@ export class AdminController {
 	@Post('/tags/remove')
 	public async removeTag(@Body('id') id: number) {
 		return await this.tags.removeTag(id);
+	}
+
+	@Post('/tags/restore')
+	public async restoreTag(@Body('id') id: number) {
+		return await this.tags.restoreTag(id);
 	}
 
 	@Post('/tags/delete')
@@ -402,6 +473,11 @@ export class AdminController {
 		return await this.ratings.removeRating(id);
 	}
 
+	@Post('/ratings/restore')
+	public async restoreRating(@Body('id') id: number) {
+		return await this.ratings.restoreRating(id);
+	}
+
 	@Post('/ratings/delete')
 	public async deleteRating(@Body('id') id: number) {
 		return await this.ratings.deleteRating(id);
@@ -430,6 +506,11 @@ export class AdminController {
 		return await this.likes.removeLike(id);
 	}
 
+	@Post('/likes/restore')
+	public async restoreLike(@Body('id') id: number) {
+		return await this.likes.restoreLike(id);
+	}
+
 	@Post('/likes/delete')
 	public async deleteLike(@Body('id') id: number) {
 		return await this.likes.deleteLike(id);
@@ -455,6 +536,11 @@ export class AdminController {
 	@Post('/comments/remove')
 	public async removeComment(@Body('id') id: number) {
 		return await this.comments.removeComment(id);
+	}
+
+	@Post('/comments/restore')
+	public async restoreComment(@Body('id') id: number) {
+		return await this.comments.restoreComment(id);
 	}
 
 	@Post('/comments/delete')
