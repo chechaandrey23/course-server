@@ -29,8 +29,10 @@ const ratings_service_1 = require("../entries/ratings/ratings.service");
 const likes_service_1 = require("../entries/likes/likes.service");
 const comments_service_1 = require("../entries/comments/comments.service");
 const refresh_token_service_1 = require("../entries/refreshtoken/refresh.token.service");
+const search_review_service_1 = require("../entries/reviews/search.review.service");
+const search_comment_service_1 = require("../entries/comments/search.comment.service");
 let AdminController = class AdminController {
-    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, refreshTokens) {
+    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, refreshTokens, searchReview, searchComment) {
         this.users = users;
         this.roles = roles;
         this.langs = langs;
@@ -45,6 +47,8 @@ let AdminController = class AdminController {
         this.likes = likes;
         this.comments = comments;
         this.refreshTokens = refreshTokens;
+        this.searchReview = searchReview;
+        this.searchComment = searchComment;
         this.countRows = 20;
         this.shortUsersCount = 150;
     }
@@ -53,6 +57,21 @@ let AdminController = class AdminController {
     }
     async deleteRefreshToken(id) {
         return await this.refreshTokens.refreshTokenDelete(id);
+    }
+    async eraseRefreshToken(id) {
+        return await this.refreshTokens.refreshTokenErase(id);
+    }
+    async getReviewForSearchAll(page = 1) {
+        return await this.searchReview.getReviewForSearchAll({ withDeleted: true, limit: this.countRows, offset: (page - 1) * this.countRows });
+    }
+    async getReviewIndexElasticSearch(reviewId, searchId) {
+        return await this.searchReview.getDualReviewIndex(reviewId, searchId);
+    }
+    async indexReviewElasticSearch(reviewId) {
+        return await this.searchReview.createIndex(reviewId);
+    }
+    async deleteIndexReviewElasticSearch(reviewId, searchId) {
+        return await this.searchReview.deleteIndex(reviewId, searchId);
     }
     async getUsers(page = 1) {
         return await this.users.getUserAll(this.countRows, (page - 1) * this.countRows, true);
@@ -223,10 +242,10 @@ let AdminController = class AdminController {
         return await this.reviews.getShortReviewAll();
     }
     async addReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked) {
-        return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
+        return await this.searchReview.createReviewWithIndexing({ description, text, authorRating, userId, titleId, groupId, draft, tags, blocked });
     }
     async editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked) {
-        return await this.reviews.editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
+        return await this.searchReview.updateReviewWithIndexing({ id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked });
     }
     async removeReview(id) {
         return await this.reviews.removeReview(id);
@@ -235,7 +254,7 @@ let AdminController = class AdminController {
         return await this.reviews.restoreReview(id);
     }
     async deleteReview(id) {
-        return await this.reviews.deleteReview(id);
+        return await this.searchReview.deleteReviewWithDeleteIndex(id);
     }
     async getReviewTagAll(page = 1) {
         return await this.reviews.getReviewTagAll(this.countRows, (page - 1) * this.countRows);
@@ -319,10 +338,10 @@ let AdminController = class AdminController {
         return await this.comments.getCommentAll(this.countRows, (page - 1) * this.countRows, true);
     }
     async addComment(reviewId, userId, comment, draft, blocked) {
-        return await this.comments.createComment(reviewId, userId, comment, draft, blocked);
+        return await this.searchComment.createCommentWithIndexing({ reviewId, userId, comment, draft, blocked });
     }
     async editComment(id, reviewId, userId, comment, draft, blocked) {
-        return await this.comments.editComment(id, reviewId, userId, comment, draft, blocked);
+        return await this.searchComment.updateCommentWithIndexing({ id, reviewId, userId, comment, draft, blocked });
     }
     async removeComment(id) {
         return await this.comments.removeComment(id);
@@ -331,7 +350,7 @@ let AdminController = class AdminController {
         return await this.comments.restoreComment(id);
     }
     async deleteComment(id) {
-        return await this.comments.deleteComment(id);
+        return await this.searchComment.deleteCommentWithIndexing(id);
     }
 };
 __decorate([
@@ -348,6 +367,43 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "deleteRefreshToken", null);
+__decorate([
+    (0, common_1.Post)('/refresh-tokens/erase'),
+    __param(0, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "eraseRefreshToken", null);
+__decorate([
+    (0, common_1.Get)('/elastic-search-reviews'),
+    __param(0, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getReviewForSearchAll", null);
+__decorate([
+    (0, common_1.Get)('/elastic-search-review/full'),
+    __param(0, (0, common_1.Query)('reviewId')),
+    __param(1, (0, common_1.Query)('searchId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getReviewIndexElasticSearch", null);
+__decorate([
+    (0, common_1.Post)('/elastic-search-review/indexing'),
+    __param(0, (0, common_1.Body)('reviewId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "indexReviewElasticSearch", null);
+__decorate([
+    (0, common_1.Post)('/elastic-search-review/delete-index'),
+    __param(0, (0, common_1.Body)('reviewId')),
+    __param(1, (0, common_1.Body)('searchId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteIndexReviewElasticSearch", null);
 __decorate([
     (0, common_1.Get)('/users'),
     __param(0, (0, common_1.Query)('page')),
@@ -1087,7 +1143,9 @@ AdminController = __decorate([
         ratings_service_1.RatingsService,
         likes_service_1.LikesService,
         comments_service_1.CommentsService,
-        refresh_token_service_1.RefreshTokenService])
+        refresh_token_service_1.RefreshTokenService,
+        search_review_service_1.SearchReviewService,
+        search_comment_service_1.SearchCommentService])
 ], AdminController);
 exports.AdminController = AdminController;
 //# sourceMappingURL=admin.controller.js.map

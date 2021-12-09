@@ -17,7 +17,7 @@ import {RatingsService} from '../entries/ratings/ratings.service';
 import {LikesService} from '../entries/likes/likes.service';
 import {CommentsService} from '../entries/comments/comments.service';
 
-//import {ReviewSearchService} from '../reviewsearch/review.search.service'
+import {SearchReviewService} from '../entries/reviews/search.review.service';
 
 @Controller('/guest')
 export class GuestController {
@@ -35,13 +35,13 @@ export class GuestController {
 		private ratings: RatingsService,
 		private likes: LikesService,
 		private comments: CommentsService,
-		//private reviewSearchService: ReviewSearchService
+		private searchReview: SearchReviewService
 	) {}
 
 	protected readonly countRows: number = 10;
 	protected readonly countTags: number = 25;
 
-	@Get(['/reviews'])
+	@Get('/reviews')
 	public async getDescriptionOrderReviews(@Query('page') page: number = 1,
 											@Query('tags') tags: number[], @Query('titles') titles: number[],
 											@Query('groups') groups: number[], @Query('authors') authors: number[],
@@ -84,6 +84,12 @@ export class GuestController {
 	public async getTagPart(@Param('query') query: string) {
 		return await this.tags.getPartTagAll(this.countRows, 0, query);
 	}
+
+	@Get('/search/:query')
+	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
+		return await this.searchReview.getSearchAll(query, {limit: this.countRows, offset: (page-1)*this.countRows, condPublic: true});
+	}
+
 	/*
 	@Get('/search/:query')
 	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {

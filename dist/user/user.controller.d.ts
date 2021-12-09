@@ -37,5 +37,5 @@ export declare class UserController {
     serUserLike(req: any, reviewId: number): Promise<import("../entries/likes/like.model").Like>;
     getComments(req: any, page: number, reviewId: any): Promise<import("../entries/comments/comment.model").Comment[]>;
     autoUpdateComments(req: any, time: number, reviewId: any): Promise<import("../entries/comments/comment.model").Comment[]>;
-    newComment(req: any, reviewId: number, comment: string): Promise<import("../entries/comments/comment.model").Comment>;
+    newComment(req: any, reviewId: number, comment: string): Promise<void>;
 }

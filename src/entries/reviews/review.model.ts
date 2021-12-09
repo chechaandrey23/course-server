@@ -7,6 +7,7 @@ import {TitleGroups} from '../titles/title.groups.model';
 //import {Image} from '../images/image.model';
 import {Rating} from '../ratings/rating.model';
 import {Like} from '../likes/like.model';
+import {Comment} from '../comments/comment.model';
 
 interface CreateReview {
 	description: string;
@@ -18,8 +19,12 @@ interface CreateReview {
 	blocked: boolean;
 }
 
+interface CreateReviewSearchId {
+	searchId: string;
+}
+
 @Table({tableName: 'reviews', timestamps: true, paranoid: true, deletedAt: true})
-export class Review extends Model<Review, CreateReview> {
+export class Review extends Model<Review, CreateReview|CreateReviewSearchId> {
 
 	@Column({type: DataType.INTEGER, unique: true, autoIncrement: true, primaryKey: true})
 	id: number;
@@ -64,4 +69,7 @@ export class Review extends Model<Review, CreateReview> {
 
 	@Column({type: DataType.STRING})
 	searchId: string;
+
+	@HasMany(() => Comment)
+	comments: Comment
 }

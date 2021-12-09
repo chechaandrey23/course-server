@@ -18,7 +18,6 @@ const refresh_token_service_1 = require("../entries/refreshtoken/refresh.token.s
 const users_service_1 = require("../entries/users/users.service");
 const auth_service_1 = require("./auth.service");
 const config_1 = require("../config");
-const jwt_access_auth_guard_1 = require("./guards/jwt.access.auth.guard");
 const jwt_refresh_auth_guard_1 = require("./guards/jwt.refresh.auth.guard");
 const local_auth_guard_1 = require("./guards/local.auth.guard");
 const github_auth_guard_1 = require("./guards/github.auth.guard");
@@ -42,9 +41,10 @@ let AuthController = class AuthController {
     async logOut(req) {
         const user = req.user;
         const cookies = this.authService.getCookiesForLogOut();
-        await this.refreshTokenService.deleteRefreshTokenAll(user.id);
+        if (user && user.id)
+            await this.refreshTokenService.deleteRefreshTokenAll(user.id);
         req.res.setHeader('Set-Cookie', cookies);
-        return { id: user.id, roles: user.roles };
+        return { id: user === null || user === void 0 ? void 0 : user.id, roles: user === null || user === void 0 ? void 0 : user.roles };
     }
     async registration(req, username, password, password2, email, first_name, last_name) {
         if (password !== password2)
@@ -63,7 +63,19 @@ let AuthController = class AuthController {
         const user = req.user;
         const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
         const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
-        await this.refreshTokenService.replaceRefreshToken(user.id, (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.Refresh, refresh.token, config_1.JWT_REFRESH_EXPIRATION_TIME);
+        try {
+            await this.refreshTokenService.replaceRefreshToken(user.id, (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.Refresh, refresh.token, config_1.JWT_REFRESH_EXPIRATION_TIME);
+        }
+        catch (e) {
+            if (e instanceof common_1.NotAcceptableException) {
+                req.res.setHeader('Set-Cookie', [
+                    'Access=; HttpOnly; Path=/; Max-Age=0',
+                    'Refresh=; HttpOnly; Path=/; Max-Age=0',
+                    'Roles=; Path=/; Max-Age=0'
+                ]);
+            }
+            throw e;
+        }
         req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
         return { id: user.id, roles: user.roles, accessToken: access.token };
     }
@@ -104,7 +116,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "logIn", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_access_auth_guard_1.JWTAccessAuthGuard),
     (0, common_1.Post)('/logout'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),

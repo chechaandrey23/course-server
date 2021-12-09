@@ -99,6 +99,15 @@ let RefreshTokenService = class RefreshTokenService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
+    async refreshTokenErase(id, withDeleted = false) {
+        try {
+            await this.refreshToken.update({ RT1: null, dateEndRT1: null }, { where: { id } });
+            return { id: id, dateEndRT1: null };
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id });
+        }
+    }
 };
 RefreshTokenService = __decorate([
     (0, common_1.Injectable)(),

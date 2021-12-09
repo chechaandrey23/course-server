@@ -104,6 +104,7 @@ export class UserController {
 
 	@Post('/new-comment')
 	public async newComment(@Request() req, @Body('reviewId') reviewId: number, @Body('comment') comment: string) {
-		return await this.comments.createComment(reviewId, req.user.id, comment, false, false);
+		//return await this.comments.createComment(reviewId, req.user.id, comment, false, false);
+		throw new Error('add new Comment NOT IMPLEMENTED');
 	}
 }

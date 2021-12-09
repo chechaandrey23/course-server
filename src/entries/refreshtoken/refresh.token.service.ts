@@ -95,4 +95,13 @@ export class RefreshTokenService {
 			handlerError(e, {id});
 		}
 	}
+
+	public async refreshTokenErase(id: number, withDeleted: boolean = false) {
+		try {
+			await this.refreshToken.update({RT1: null, dateEndRT1: null}, {where: {id}/*, transaction: t*/});
+			return {id: id, dateEndRT1: null};
+		} catch(e) {
+			handlerError(e, {id});
+		}
+	}
 }

@@ -17,6 +17,21 @@ export interface queryOptions {
     forUserId?: number;
     countComments?: boolean;
 }
+export interface CreateReview {
+    description: string;
+    text: string;
+    authorRating: number;
+    userId: number;
+    titleId: number;
+    groupId: number;
+    draft: boolean;
+    tags: number[];
+    blocked: boolean;
+    transaction?: Transaction;
+}
+export interface UpdateReview extends CreateReview {
+    id: number;
+}
 export declare class ReviewsService {
     private sequelize;
     private reviews;
@@ -24,10 +39,10 @@ export declare class ReviewsService {
     private reviewTags;
     private titleGroups;
     constructor(sequelize: Sequelize, reviews: typeof Review, tags: typeof Tag, reviewTags: typeof ReviewTags, titleGroups: typeof TitleGroups);
-    createReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean, createWithOutGroupTitle?: boolean): Promise<Review>;
+    createReview(opts: CreateReview, createWithOutGroupTitle?: boolean): Promise<Review>;
     protected _patchReviewTag(t: Transaction, reviewId: number, tags: number[]): Promise<void>;
     protected _updateReviewTag(t: Transaction, reviewId: number, tags: number[]): Promise<void>;
-    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<Review>;
+    editReview(opts: UpdateReview): Promise<Review>;
     _createReviewOther(t: Transaction, tags: number[], reviewId: number): Promise<void>;
     removeReview(id: number): Promise<{
         id: number;
@@ -37,7 +52,7 @@ export declare class ReviewsService {
         id: number;
         deletedAt: any;
     }>;
-    deleteReview(id: number): Promise<{
+    deleteReview(id: number, transaction?: Transaction): Promise<{
         id: number;
     }>;
     getReviewAll(opts: OptionsQueryAll): Promise<Review[]>;

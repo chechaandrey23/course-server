@@ -25,6 +25,8 @@ export interface ReviewSearch {
         id: number;
         comment: string;
     }>;
+    blocked: boolean;
+    draft: boolean;
 }
 export interface ReviewCommentBody {
     id: number;
@@ -32,6 +34,7 @@ export interface ReviewCommentBody {
 }
 export interface ReviewSearchBody {
     id: number;
+    skip: boolean;
     description: string;
     text: string;
     group: string;
@@ -50,15 +53,19 @@ export interface ReviewSearchResult {
         }>;
     };
 }
-export declare class ReviewSearchService {
+export declare class ReviewElasticSearchService {
     private elasticsearchService;
     protected index: string;
     constructor(elasticsearchService: ElasticsearchService);
     indexReview(review: ReviewSearch): Promise<import("@elastic/elasticsearch").ApiResponse<ReviewSearchBody, unknown>>;
-    searchReviews(text: string): Promise<{
+    searchReviews(text: string, offset: number, count: number): Promise<{
         ids: any[];
         searchIds: any[];
     }>;
+    hideReviewIndex(id: string): Promise<void>;
+    showReviewIndex(id: string): Promise<void>;
+    getReviewIndex(id: number): Promise<import("@elastic/elasticsearch").ApiResponse<ReviewSearchResult, unknown>>;
+    getReviewIndexWithIndex(id: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReview(reviewId: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReviewWithId(id: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     protected getScriptUpdate(review: ReviewSearch): string;

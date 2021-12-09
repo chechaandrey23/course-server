@@ -9,7 +9,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReviewsModule = void 0;
 const common_1 = require("@nestjs/common");
 const sequelize_1 = require("@nestjs/sequelize");
+const review_elastic_search_module_1 = require("../reviewelasticsearch/review.elastic.search.module");
 const reviews_service_1 = require("./reviews.service");
+const search_review_service_1 = require("./search.review.service");
 const review_model_1 = require("./review.model");
 const review_tags_model_1 = require("./review.tags.model");
 const tag_model_1 = require("../tags/tag.model");
@@ -19,14 +21,17 @@ let ReviewsModule = class ReviewsModule {
 ReviewsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            sequelize_1.SequelizeModule.forFeature([review_model_1.Review, review_tags_model_1.ReviewTags, title_groups_model_1.TitleGroups, tag_model_1.Tag])
+            sequelize_1.SequelizeModule.forFeature([review_model_1.Review, review_tags_model_1.ReviewTags, title_groups_model_1.TitleGroups, tag_model_1.Tag]),
+            review_elastic_search_module_1.ReviewElasticSearchModule
         ],
         controllers: [],
         providers: [
-            reviews_service_1.ReviewsService
+            reviews_service_1.ReviewsService,
+            search_review_service_1.SearchReviewService
         ],
         exports: [
             reviews_service_1.ReviewsService,
+            search_review_service_1.SearchReviewService
         ]
     })
 ], ReviewsModule);

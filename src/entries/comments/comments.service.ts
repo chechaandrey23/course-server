@@ -1,7 +1,7 @@
 import {HttpException, HttpStatus, Injectable, Inject, ConflictException} from '@nestjs/common';
 import {InjectModel} from "@nestjs/sequelize";
 import {Sequelize} from 'sequelize-typescript';
-import {Op} from "sequelize";
+import {Op, Transaction} from 'sequelize';
 
 import {handlerError} from '../../helpers/handler.error';
 
@@ -12,14 +12,34 @@ import {Title} from '../titles/title.model';
 import {Group} from '../groups/group.model';
 import {TitleGroups} from '../titles/title.groups.model';
 
+export interface CreateComment {
+	reviewId: number;
+	userId: number;
+	comment: string;
+	draft: boolean;
+	blocked: boolean;
+	transaction?: Transaction;
+}
+
+export interface UpdateComment extends CreateComment {
+	id: number;
+}
+
 @Injectable()
 export class CommentsService {
 	constructor(private sequelize: Sequelize, @InjectModel(Comment) private comments: typeof Comment) {}
 
-	public async createComment(reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean) {
+	public async createComment(opts: CreateComment) {
 		try {
-			return await this.sequelize.transaction({}, async (t) => {
-				let res = await this.comments.create({reviewId, userId, comment, draft: !!draft, blocked: !!blocked}, {transaction: t});
+			const transaction = opts.transaction;
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				let res = await this.comments.create({
+					reviewId: opts.reviewId,
+					userId: opts.userId,
+					comment: opts.comment,
+					draft: !!opts.draft,
+					blocked: !!opts.blocked
+				}, {transaction: t});
 
 				return await this.comments.findOne({include: [
 					{model: User, attributes: ['id', 'user', 'social_id']},
@@ -27,28 +47,35 @@ export class CommentsService {
 						{model: Title, attributes: ['id', 'title']},
 						{model: Group, attributes: ['id', 'group']}
 					]}]}
-				], where: {id: res.getDataValue('id'), reviewId, userId}, transaction: t});
+				], where: {id: res.getDataValue('id'), reviewId: opts.reviewId, userId: opts.userId}, transaction: t});
 			});
 		} catch(e) {
 			handlerError(e);
 		}
 	}
 
-	public async editComment(id: number, reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean) {
+	public async editComment(opts: UpdateComment) {
 		try {
-			return await this.sequelize.transaction({}, async (t) => {
-				let res = await this.comments.update({comment, draft: !!draft, blocked: !!blocked, reviewId, userId}, {where: {id}, transaction: t});
-				console.log(res);
+			const transaction = opts.transaction;
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				let res = await this.comments.update({
+					comment: opts.comment,
+					draft: !!opts.draft,
+					blocked: !!opts.blocked,
+					reviewId: opts.reviewId,
+					userId: opts.userId
+				}, {where: {id: opts.id}, transaction: t});
+
 				return await this.comments.findOne({include: [
 					{model: User, attributes: ['id', 'user', 'social_id']},
 					{model: Review, attributes: ['id'], include: [{model: TitleGroups, include: [
 						{model: Title, attributes: ['id', 'title']},
 						{model: Group, attributes: ['id', 'group']}
 					]}]}
-				], where: {id, reviewId, userId}, transaction: t});
+				], where: {id: opts.id, reviewId: opts.reviewId, userId: opts.userId}, transaction: t});
 			});
 		} catch(e) {
-			handlerError(e, {id});
+			handlerError(e, {id: opts.id});
 		}
 	}
 
@@ -70,10 +97,12 @@ export class CommentsService {
 		}
 	}
 
-	public async deleteComment(id: number) {
+	public async deleteComment(id: number, transaction?: Transaction) {
 		try {
-			await this.comments.destroy({where: {id}/*, transaction: t*/, force: true});
-			return {id: id};
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				await this.comments.destroy({where: {id}, transaction: t, force: true});
+				return {id: id};
+			});
 		} catch(e) {
 			handlerError(e, {id});
 		}

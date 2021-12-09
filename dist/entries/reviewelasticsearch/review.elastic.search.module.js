@@ -6,32 +6,33 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReviewSearchModule = void 0;
+exports.ReviewElasticSearchModule = void 0;
 const common_1 = require("@nestjs/common");
 const elasticsearch_1 = require("@nestjs/elasticsearch");
-const review_search_service_1 = require("./review.search.service");
-let ReviewSearchModule = class ReviewSearchModule {
+const review_elastic_search_service_1 = require("./review.elastic.search.service");
+const config_1 = require("../../config");
+let ReviewElasticSearchModule = class ReviewElasticSearchModule {
 };
-ReviewSearchModule = __decorate([
+ReviewElasticSearchModule = __decorate([
     (0, common_1.Module)({
         imports: [
             elasticsearch_1.ElasticsearchModule.register({
-                node: 'http://localhost:9200',
+                node: config_1.ELASTIC_SEARCH_HOST,
                 auth: {
-                    username: 'elastic',
-                    password: 'changeme'
+                    username: config_1.ELASTIC_SEARCH_USERNAME,
+                    password: config_1.ELASTIC_SEARCH_PASSWORD
                 }
             })
         ],
         controllers: [],
         providers: [
-            review_search_service_1.ReviewSearchService
+            review_elastic_search_service_1.ReviewElasticSearchService
         ],
         exports: [
             elasticsearch_1.ElasticsearchModule,
-            review_search_service_1.ReviewSearchService
+            review_elastic_search_service_1.ReviewElasticSearchService
         ]
     })
-], ReviewSearchModule);
-exports.ReviewSearchModule = ReviewSearchModule;
-//# sourceMappingURL=review.search.module.js.map
+], ReviewElasticSearchModule);
+exports.ReviewElasticSearchModule = ReviewElasticSearchModule;
+//# sourceMappingURL=review.elastic.search.module.js.map

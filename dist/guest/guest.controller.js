@@ -27,8 +27,9 @@ const tags_service_1 = require("../entries/tags/tags.service");
 const ratings_service_1 = require("../entries/ratings/ratings.service");
 const likes_service_1 = require("../entries/likes/likes.service");
 const comments_service_1 = require("../entries/comments/comments.service");
+const search_review_service_1 = require("../entries/reviews/search.review.service");
 let GuestController = class GuestController {
-    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments) {
+    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, searchReview) {
         this.users = users;
         this.roles = roles;
         this.langs = langs;
@@ -42,6 +43,7 @@ let GuestController = class GuestController {
         this.ratings = ratings;
         this.likes = likes;
         this.comments = comments;
+        this.searchReview = searchReview;
         this.countRows = 10;
         this.countTags = 25;
         this.countEditorRows = 20;
@@ -71,9 +73,12 @@ let GuestController = class GuestController {
     async getTagPart(query) {
         return await this.tags.getPartTagAll(this.countRows, 0, query);
     }
+    async getReviewSearchAll(query, page = 1) {
+        return await this.searchReview.getSearchAll(query, { limit: this.countRows, offset: (page - 1) * this.countRows, condPublic: true });
+    }
 };
 __decorate([
-    (0, common_1.Get)(['/reviews']),
+    (0, common_1.Get)('/reviews'),
     __param(0, (0, common_1.Query)('page')),
     __param(1, (0, common_1.Query)('tags')),
     __param(2, (0, common_1.Query)('titles')),
@@ -127,6 +132,14 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getTagPart", null);
+__decorate([
+    (0, common_1.Get)('/search/:query'),
+    __param(0, (0, common_1.Param)('query')),
+    __param(1, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:returntype", Promise)
+], GuestController.prototype, "getReviewSearchAll", null);
 GuestController = __decorate([
     (0, common_1.Controller)('/guest'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
@@ -141,7 +154,8 @@ GuestController = __decorate([
         tags_service_1.TagsService,
         ratings_service_1.RatingsService,
         likes_service_1.LikesService,
-        comments_service_1.CommentsService])
+        comments_service_1.CommentsService,
+        search_review_service_1.SearchReviewService])
 ], GuestController);
 exports.GuestController = GuestController;
 //# sourceMappingURL=guest.controller.js.map

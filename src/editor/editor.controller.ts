@@ -62,19 +62,23 @@ export class EditorController {
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/review-new')
 	public async newReview(@Request() req) {
-		return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], false/* is blocked false*/, true);
+		throw new Error('NOT IMPLEMENTED REVIEW NEW');
+		//return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], false/* is blocked false*/, true);
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/review-edit')
 	public async editReview(@Request() req, @Body('id') id: number, @Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[]) {
-		return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags, false/* is blocked false*/);
+		//return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags, false/* is blocked false*/);
+		//return await this.reviews.editReview({id, description, text, authorRating, userId: req.user.id, titleId, groupId, draft, tags, blocked: false});
+		throw new Error('NOT IMPLEMENTED REVIEW EDIT');
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/review-remove')
 	public async removeReview(@Request() req, @Body('id') id: number) {
-		return await this.reviews.removeReview(id);
+		//return await this.reviews.removeReview(id);
+		throw new Error('NOT IMPLEMENTED REVIEW REMOVE');
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)

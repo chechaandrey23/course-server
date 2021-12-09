@@ -9,10 +9,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ReviewSearchService = void 0;
+exports.ReviewElasticSearchService = void 0;
 const common_1 = require("@nestjs/common");
 const elasticsearch_1 = require("@nestjs/elasticsearch");
-let ReviewSearchService = class ReviewSearchService {
+let ReviewElasticSearchService = class ReviewElasticSearchService {
     constructor(elasticsearchService) {
         this.elasticsearchService = elasticsearchService;
         this.index = 'reviews';
@@ -23,6 +23,7 @@ let ReviewSearchService = class ReviewSearchService {
             index: this.index,
             body: {
                 id: review.id,
+                skip: !!(review.blocked || review.draft),
                 description: review.description || '',
                 text: review.text || '',
                 group: ((_b = (_a = review.groupTitle) === null || _a === void 0 ? void 0 : _a.group) === null || _b === void 0 ? void 0 : _b.group) || '',
@@ -30,17 +31,19 @@ let ReviewSearchService = class ReviewSearchService {
                 titleDescription: ((_f = (_e = review.groupTitle) === null || _e === void 0 ? void 0 : _e.title) === null || _f === void 0 ? void 0 : _f.description) || '',
                 tags: (review.tags || []).map((entry) => entry.tag),
                 authorFullName: (((_h = (_g = review.user) === null || _g === void 0 ? void 0 : _g.userInfo) === null || _h === void 0 ? void 0 : _h.first_name) || '') + ' ' + (((_k = (_j = review.user) === null || _j === void 0 ? void 0 : _j.userInfo) === null || _k === void 0 ? void 0 : _k.last_name) || ''),
-                comments: (review.comments || []).map((entry) => entry.comment)
+                comments: (review.comments || []).map((entry) => ({ id: entry.id, comment: entry.comment }))
             }
         });
     }
-    async searchReviews(text) {
+    async searchReviews(text, offset, count) {
         const { body } = await this.elasticsearchService.search({
+            from: offset,
+            size: count,
             index: this.index,
             body: {
                 query: {
-                    multi_match: {
-                        query: text,
+                    query_string: {
+                        query: `(*${text}*) AND skip:false`,
                         fields: [
                             'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments.comment'
                         ]
@@ -49,11 +52,26 @@ let ReviewSearchService = class ReviewSearchService {
             }
         });
         const hits = body.hits.hits;
+        console.log(hits);
         return hits.reduce((acc, entry) => {
             acc.ids.push(entry._source.id);
             acc.searchIds.push(entry._id);
             return acc;
         }, { ids: [], searchIds: [] });
+    }
+    async hideReviewIndex(id) { }
+    async showReviewIndex(id) { }
+    async getReviewIndex(id) {
+        return await this.elasticsearchService.search({ index: this.index, size: 1, body: {
+                query: {
+                    match: {
+                        id: id,
+                    }
+                }
+            } });
+    }
+    async getReviewIndexWithIndex(id) {
+        return await this.elasticsearchService.getSource({ id, index: this.index });
     }
     async deleteReview(reviewId) {
         return await this.elasticsearchService.deleteByQuery({
@@ -68,21 +86,13 @@ let ReviewSearchService = class ReviewSearchService {
         });
     }
     async deleteReviewWithId(id) {
-        return await this.elasticsearchService.deleteByQuery({
-            index: this.index,
-            body: {
-                query: {
-                    terms: {
-                        _id: [id],
-                    }
-                }
-            }
-        });
+        return await this.elasticsearchService.delete({ id, index: this.index });
     }
     getScriptUpdate(review) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         const newBody = {
             id: review.id,
+            skip: !!(review.blocked || review.draft),
             description: review.description || '',
             text: review.text || '',
             group: ((_b = (_a = review.groupTitle) === null || _a === void 0 ? void 0 : _a.group) === null || _b === void 0 ? void 0 : _b.group) || '',
@@ -112,19 +122,11 @@ let ReviewSearchService = class ReviewSearchService {
         });
     }
     async updateReviewWithId(id, review) {
-        return await this.elasticsearchService.updateByQuery({
-            index: this.index,
-            body: {
-                query: {
-                    terms: {
-                        _id: [id],
-                    }
-                },
+        return await this.elasticsearchService.update({ id, index: this.index, body: {
                 script: {
                     inline: this.getScriptUpdate(review)
                 }
-            }
-        });
+            } });
     }
     async addReviewComment(reviewId, commentId, comment) {
         return await this.elasticsearchService.updateByQuery({
@@ -249,9 +251,9 @@ let ReviewSearchService = class ReviewSearchService {
         });
     }
 };
-ReviewSearchService = __decorate([
+ReviewElasticSearchService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [elasticsearch_1.ElasticsearchService])
-], ReviewSearchService);
-exports.ReviewSearchService = ReviewSearchService;
-//# sourceMappingURL=review.search.service.js.map
+], ReviewElasticSearchService);
+exports.ReviewElasticSearchService = ReviewElasticSearchService;
+//# sourceMappingURL=review.elastic.search.service.js.map

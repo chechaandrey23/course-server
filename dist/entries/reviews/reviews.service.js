@@ -38,9 +38,11 @@ let ReviewsService = class ReviewsService {
         this.reviewTags = reviewTags;
         this.titleGroups = titleGroups;
     }
-    async createReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked, createWithOutGroupTitle = false) {
+    async createReview(opts, createWithOutGroupTitle = false) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                const titleId = opts.titleId, groupId = opts.groupId;
                 let titleGroupId = 0;
                 let res0 = await this.titleGroups.findOne({ where: { titleId, groupId }, transaction: t, paranoid: false });
                 if (!res0) {
@@ -55,8 +57,16 @@ let ReviewsService = class ReviewsService {
                         throw new common_1.ConflictException({ titleId, groupId, reason: `group/title "${groupId}/${titleId}" NOT FOUND` });
                     }
                 }
-                let res = await this.reviews.create({ description, blocked: !!blocked, text, authorRating, userId, titleGroupId: titleGroupId || res0.getDataValue('id'), draft: !!draft }, { transaction: t });
-                await this._patchReviewTag(t, res.getDataValue('id'), tags);
+                let res = await this.reviews.create({
+                    description: opts.description,
+                    blocked: !!opts.blocked,
+                    text: opts.text,
+                    authorRating: opts.authorRating,
+                    userId: opts.userId,
+                    titleGroupId: titleGroupId || res0.getDataValue('id'),
+                    draft: !!opts.draft
+                }, { transaction: t });
+                await this._patchReviewTag(t, res.getDataValue('id'), opts.tags);
                 return await this.reviews.findOne(this.buildQueryOne({ reviewId: res.getDataValue('id'), transaction: t }));
             });
         }
@@ -79,19 +89,29 @@ let ReviewsService = class ReviewsService {
         await this.reviewTags.update({ selected: false }, { where: { reviewId: reviewId }, transaction: t });
         await this.reviewTags.update({ selected: true }, { where: { reviewId: reviewId, tagId: { [sequelize_2.Op.in]: tags } }, transaction: t });
     }
-    async editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked) {
+    async editReview(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                const id = opts.id, titleId = opts.titleId, groupId = opts.groupId;
                 let res0 = await this.titleGroups.findOne({ where: { titleId, groupId }, transaction: t, paranoid: false });
                 if (!res0)
                     throw new common_1.ConflictException({ titleId, groupId, reason: `group/title "${groupId}/${titleId}" NOT FOUND` });
-                await this.reviews.update({ description, blocked: !!blocked, text, authorRating, userId, titleGroupId: res0.getDataValue('id'), draft: !!draft }, { where: { id }, transaction: t });
-                await this._updateReviewTag(t, id, tags);
+                await this.reviews.update({
+                    description: opts.description,
+                    blocked: !!opts.blocked,
+                    text: opts.text,
+                    authorRating: opts.authorRating,
+                    userId: opts.userId,
+                    titleGroupId: res0.getDataValue('id'),
+                    draft: !!opts.draft
+                }, { where: { id }, transaction: t });
+                await this._updateReviewTag(t, id, opts.tags);
                 return await this.reviews.findOne(this.buildQueryOne({ reviewId: id, transaction: t }));
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
     async _createReviewOther(t, tags, reviewId) {
@@ -122,9 +142,9 @@ let ReviewsService = class ReviewsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
-    async deleteReview(id) {
+    async deleteReview(id, transaction) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
                 await this.reviewTags.destroy({ where: { reviewId: id }, transaction: t, force: true });
                 await this.reviews.destroy({ where: { id }, transaction: t, force: true });
                 return { id: id };
@@ -214,7 +234,7 @@ let ReviewsService = class ReviewsService {
         let comentTableName = comment_model_1.Comment.tableName.toString();
         let paranoid = !opts.withDeleted;
         let transaction = opts.transaction;
-        const includeTags = { model: tag_model_1.Tag, attributes: ['id', 'tag'], through: { where: { selected: true } }, paranoid };
+        const includeTags = { model: tag_model_1.Tag, attributes: ['id', 'tag'], through: { attributes: [], where: { selected: true } }, paranoid };
         const includeTitleGroups = { model: title_groups_model_1.TitleGroups, paranoid, where: {}, include: [
                 { model: title_model_1.Title, required: false, attributes: ['id', 'title', 'description'], paranoid },
                 { model: group_model_1.Group, required: false, attributes: ['id', 'group'], paranoid }

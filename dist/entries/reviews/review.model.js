@@ -17,6 +17,7 @@ const review_tags_model_1 = require("./review.tags.model");
 const title_groups_model_1 = require("../titles/title.groups.model");
 const rating_model_1 = require("../ratings/rating.model");
 const like_model_1 = require("../likes/like.model");
+const comment_model_1 = require("../comments/comment.model");
 let Review = class Review extends sequelize_typescript_1.Model {
 };
 __decorate([
@@ -77,6 +78,10 @@ __decorate([
     (0, sequelize_typescript_1.Column)({ type: sequelize_typescript_1.DataType.STRING }),
     __metadata("design:type", String)
 ], Review.prototype, "searchId", void 0);
+__decorate([
+    (0, sequelize_typescript_1.HasMany)(() => comment_model_1.Comment),
+    __metadata("design:type", comment_model_1.Comment)
+], Review.prototype, "comments", void 0);
 Review = __decorate([
     (0, sequelize_typescript_1.Table)({ tableName: 'reviews', timestamps: true, paranoid: true, deletedAt: true })
 ], Review);

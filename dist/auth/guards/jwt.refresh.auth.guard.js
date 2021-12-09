@@ -10,6 +10,19 @@ exports.JWTRefreshAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 let JWTRefreshAuthGuard = class JWTRefreshAuthGuard extends (0, passport_1.AuthGuard)('jwt-refresh') {
+    handleRequest(err, user, info, context, status) {
+        if (err)
+            throw new common_1.HttpException(err.message, err.status);
+        if (!user) {
+            context.getResponse().setHeader('Set-Cookie', [
+                'Access=; HttpOnly; Path=/; Max-Age=0',
+                'Refresh=; HttpOnly; Path=/; Max-Age=0',
+                'Roles=; Path=/; Max-Age=0'
+            ]);
+            throw new common_1.UnauthorizedException(info.message);
+        }
+        return user;
+    }
 };
 JWTRefreshAuthGuard = __decorate([
     (0, common_1.Injectable)()

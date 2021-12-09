@@ -13,6 +13,8 @@ import { RatingsService } from '../entries/ratings/ratings.service';
 import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
 import { RefreshTokenService } from '../entries/refreshtoken/refresh.token.service';
+import { SearchReviewService } from '../entries/reviews/search.review.service';
+import { SearchCommentService } from '../entries/comments/search.comment.service';
 export declare class AdminController {
     private users;
     private roles;
@@ -28,11 +30,30 @@ export declare class AdminController {
     private likes;
     private comments;
     private refreshTokens;
-    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, refreshTokens: RefreshTokenService);
+    private searchReview;
+    private searchComment;
+    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, refreshTokens: RefreshTokenService, searchReview: SearchReviewService, searchComment: SearchCommentService);
     protected readonly countRows: number;
     getRefreshTokens(page?: number): Promise<import("../entries/refreshtoken/refresh.token.model").RefreshToken[]>;
     deleteRefreshToken(id: number): Promise<{
         id: number;
+    }>;
+    eraseRefreshToken(id: number): Promise<{
+        id: number;
+        dateEndRT1: any;
+    }>;
+    getReviewForSearchAll(page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
+    getReviewIndexElasticSearch(reviewId: number, searchId: string): Promise<{
+        review: import("../entries/reviews/review.model").Review;
+        index: import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>;
+    }>;
+    indexReviewElasticSearch(reviewId: number): Promise<{
+        id: number;
+        searchId: any;
+    }>;
+    deleteIndexReviewElasticSearch(reviewId: number, searchId: string): Promise<{
+        id: number;
+        searchId: any;
     }>;
     getUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
     addUser(user: string, password: string, email: string, first_name: string, last_name: string): Promise<any>;
@@ -147,8 +168,8 @@ export declare class AdminController {
     getReviews(page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
     getReview(reviewId: any): Promise<import("../entries/reviews/review.model").Review>;
     getShortReviews(): Promise<import("../entries/reviews/review.model").Review[]>;
-    addReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<import("../entries/reviews/review.model").Review>;
-    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<import("../entries/reviews/review.model").Review>;
+    addReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<any>;
+    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<any>;
     removeReview(id: number): Promise<{
         id: number;
         deletedAt: string;
@@ -219,8 +240,8 @@ export declare class AdminController {
         id: number;
     }>;
     getComments(page?: number): Promise<import("../entries/comments/comment.model").Comment[]>;
-    addComment(reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean): Promise<import("../entries/comments/comment.model").Comment>;
-    editComment(id: number, reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean): Promise<import("../entries/comments/comment.model").Comment>;
+    addComment(reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean): Promise<any>;
+    editComment(id: number, reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean): Promise<any>;
     removeComment(id: number): Promise<{
         id: number;
         deletedAt: string;

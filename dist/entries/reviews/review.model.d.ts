@@ -4,6 +4,7 @@ import { Tag } from '../tags/tag.model';
 import { TitleGroups } from '../titles/title.groups.model';
 import { Rating } from '../ratings/rating.model';
 import { Like } from '../likes/like.model';
+import { Comment } from '../comments/comment.model';
 interface CreateReview {
     description: string;
     text: string;
@@ -13,7 +14,10 @@ interface CreateReview {
     draft: boolean;
     blocked: boolean;
 }
-export declare class Review extends Model<Review, CreateReview> {
+interface CreateReviewSearchId {
+    searchId: string;
+}
+export declare class Review extends Model<Review, CreateReview | CreateReviewSearchId> {
     id: number;
     blocked: boolean;
     description: string;
@@ -28,5 +32,6 @@ export declare class Review extends Model<Review, CreateReview> {
     ratings: Rating;
     likes: Like;
     searchId: string;
+    comments: Comment;
 }
 export {};

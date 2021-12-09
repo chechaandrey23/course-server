@@ -29,39 +29,52 @@ let CommentsService = class CommentsService {
         this.sequelize = sequelize;
         this.comments = comments;
     }
-    async createComment(reviewId, userId, comment, draft, blocked) {
+    async createComment(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                let res = await this.comments.create({ reviewId, userId, comment, draft: !!draft, blocked: !!blocked }, { transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                let res = await this.comments.create({
+                    reviewId: opts.reviewId,
+                    userId: opts.userId,
+                    comment: opts.comment,
+                    draft: !!opts.draft,
+                    blocked: !!opts.blocked
+                }, { transaction: t });
                 return await this.comments.findOne({ include: [
                         { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] },
                         { model: review_model_1.Review, attributes: ['id'], include: [{ model: title_groups_model_1.TitleGroups, include: [
                                         { model: title_model_1.Title, attributes: ['id', 'title'] },
                                         { model: group_model_1.Group, attributes: ['id', 'group'] }
                                     ] }] }
-                    ], where: { id: res.getDataValue('id'), reviewId, userId }, transaction: t });
+                    ], where: { id: res.getDataValue('id'), reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
             });
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async editComment(id, reviewId, userId, comment, draft, blocked) {
+    async editComment(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                let res = await this.comments.update({ comment, draft: !!draft, blocked: !!blocked, reviewId, userId }, { where: { id }, transaction: t });
-                console.log(res);
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                let res = await this.comments.update({
+                    comment: opts.comment,
+                    draft: !!opts.draft,
+                    blocked: !!opts.blocked,
+                    reviewId: opts.reviewId,
+                    userId: opts.userId
+                }, { where: { id: opts.id }, transaction: t });
                 return await this.comments.findOne({ include: [
                         { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] },
                         { model: review_model_1.Review, attributes: ['id'], include: [{ model: title_groups_model_1.TitleGroups, include: [
                                         { model: title_model_1.Title, attributes: ['id', 'title'] },
                                         { model: group_model_1.Group, attributes: ['id', 'group'] }
                                     ] }] }
-                    ], where: { id, reviewId, userId }, transaction: t });
+                    ], where: { id: opts.id, reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
     async removeComment(id) {
@@ -82,10 +95,12 @@ let CommentsService = class CommentsService {
             (0, handler_error_1.handlerError)(e, { id });
         }
     }
-    async deleteComment(id) {
+    async deleteComment(id, transaction) {
         try {
-            await this.comments.destroy({ where: { id }, force: true });
-            return { id: id };
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                await this.comments.destroy({ where: { id }, transaction: t, force: true });
+                return { id: id };
+            });
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e, { id });

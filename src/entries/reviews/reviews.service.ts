@@ -32,6 +32,23 @@ export interface queryOptions {
 	countComments?: boolean;
 }
 
+export interface CreateReview {
+	description: string;
+	text: string;
+	authorRating: number;
+	userId: number;
+	titleId: number;
+	groupId: number;
+	draft: boolean;
+	tags: number[];
+	blocked: boolean;
+	transaction?: Transaction;
+}
+
+export interface UpdateReview extends CreateReview {
+	id: number;
+}
+
 @Injectable()
 export class ReviewsService {
 	constructor(
@@ -42,9 +59,11 @@ export class ReviewsService {
 		@InjectModel(TitleGroups) private titleGroups: typeof TitleGroups
 	) {}
 
-	public async createReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean, createWithOutGroupTitle: boolean = false) {
+	public async createReview(opts: CreateReview, createWithOutGroupTitle: boolean = false) {
 		try {
-			return await this.sequelize.transaction({}, async (t) => {
+			const transaction = opts.transaction;
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				const titleId = opts.titleId, groupId = opts.groupId;
 				let titleGroupId = 0;
 
 				let res0 = await this.titleGroups.findOne({where: {titleId, groupId}, transaction: t, paranoid: false});
@@ -61,10 +80,18 @@ export class ReviewsService {
 					}
 				}
 
-				let res = await this.reviews.create({description, blocked: !!blocked, text, authorRating, userId, titleGroupId: titleGroupId || res0.getDataValue('id'), draft: !!draft}, {transaction: t});
+				let res = await this.reviews.create({
+					description: opts.description,
+					blocked: !!opts.blocked,
+					text: opts.text,
+					authorRating: opts.authorRating,
+					userId: opts.userId,
+					titleGroupId: titleGroupId || res0.getDataValue('id'),
+					draft: !!opts.draft
+				}, {transaction: t});
 
 				//await this._createReviewOther(t, tags, res.getDataValue('id'));
-				await this._patchReviewTag(t, res.getDataValue('id'), tags);
+				await this._patchReviewTag(t, res.getDataValue('id'), opts.tags);
 
 				return await this.reviews.findOne(this.buildQueryOne({reviewId: res.getDataValue('id'), transaction: t}));
 			});
@@ -90,22 +117,33 @@ export class ReviewsService {
 		await this.reviewTags.update({selected: true}, {where: {reviewId: reviewId, tagId: {[Op.in]: tags}}, transaction: t});
 	}
 
-	public async editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean) {
+	public async editReview(opts: UpdateReview) {
 		try {
-			return await this.sequelize.transaction({}, async (t) => {
+			const transaction = opts.transaction;
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				const id = opts.id, titleId = opts.titleId, groupId = opts.groupId;
+
 				let res0 = await this.titleGroups.findOne({where: {titleId, groupId}, transaction: t, paranoid: false});
 
 				if(!res0) throw new ConflictException({titleId, groupId, reason: `group/title "${groupId}/${titleId}" NOT FOUND`});
 
-				await this.reviews.update({description, blocked: !!blocked, text, authorRating, userId, titleGroupId: res0.getDataValue('id'), draft: !!draft}, {where: {id}, transaction: t});
+				await this.reviews.update({
+					description: opts.description,
+					blocked: !!opts.blocked,
+					text: opts.text,
+					authorRating: opts.authorRating,
+					userId: opts.userId,
+					titleGroupId: res0.getDataValue('id'),
+					draft: !!opts.draft
+				}, {where: {id}, transaction: t});
 
 				//await this._createReviewOther(t, tags, id);
-				await this._updateReviewTag(t, id, tags);
+				await this._updateReviewTag(t, id, opts.tags);
 
 				return await this.reviews.findOne(this.buildQueryOne({reviewId: id, transaction: t}));
 			});
 		} catch(e) {
-			handlerError(e, {id});
+			handlerError(e, {id: opts.id});
 		}
 	}
 
@@ -138,9 +176,9 @@ export class ReviewsService {
 		}
 	}
 
-	public async deleteReview(id: number) {
+	public async deleteReview(id: number, transaction?: Transaction) {
 		try {
-			return await this.sequelize.transaction({}, async (t) => {
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
 				await this.reviewTags.destroy({where: {reviewId: id}, transaction: t, force: true});
 				await this.reviews.destroy({where: {id}, transaction: t, force: true});
 				return {id: id};
@@ -300,7 +338,7 @@ export class ReviewsService {
 		let paranoid = !opts.withDeleted;
 		let transaction = opts.transaction;
 
-		const includeTags: any = {model: Tag, attributes: ['id', 'tag'], through: { where: { selected: true } }, paranoid};
+		const includeTags: any = {model: Tag, attributes: ['id', 'tag'], through: {attributes: [], where: { selected: true } }, paranoid};
 		const includeTitleGroups: any = {model: TitleGroups, paranoid, where: {}, include: [
 			{model: Title, required: false, attributes: ['id', 'title', 'description'], paranoid},
 			{model: Group, required: false, attributes: ['id', 'group'], paranoid}

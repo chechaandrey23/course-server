@@ -60,13 +60,13 @@ let EditorController = class EditorController {
         return await this.reviews.getReviewOne({ reviewId: id, condUserId: req.user.id });
     }
     async newReview(req) {
-        return await this.reviews.createReview('', '', 0, req.user.id, 0, 0, true, [], false, true);
+        throw new Error('NOT IMPLEMENTED REVIEW NEW');
     }
     async editReview(req, id, description, text, authorRating, titleId, groupId, draft, tags) {
-        return await this.reviews.editReview(id, description, text, authorRating, req.user.id, titleId, groupId, draft, tags, false);
+        throw new Error('NOT IMPLEMENTED REVIEW EDIT');
     }
     async removeReview(req, id) {
-        return await this.reviews.removeReview(id);
+        throw new Error('NOT IMPLEMENTED REVIEW REMOVE');
     }
     async newTitle(title, description) {
         return await this.titles.createTitle(title, description);

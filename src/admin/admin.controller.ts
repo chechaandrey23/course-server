@@ -19,6 +19,9 @@ import {CommentsService} from '../entries/comments/comments.service';
 
 import {RefreshTokenService} from '../entries/refreshtoken/refresh.token.service';
 
+import {SearchReviewService} from '../entries/reviews/search.review.service';
+import {SearchCommentService} from '../entries/comments/search.comment.service';
+
 @Controller('admin/api')
 export class AdminController {
 	constructor(
@@ -35,7 +38,9 @@ export class AdminController {
 		private ratings: RatingsService,
 		private likes: LikesService,
 		private comments: CommentsService,
-		private refreshTokens: RefreshTokenService
+		private refreshTokens: RefreshTokenService,
+		private searchReview: SearchReviewService,
+		private searchComment: SearchCommentService
 	) {}
 
 	protected readonly countRows: number = 20;
@@ -49,6 +54,34 @@ export class AdminController {
 	@Post('/refresh-tokens/delete')
 	public async deleteRefreshToken(@Body('id') id: number) {
 		return await this.refreshTokens.refreshTokenDelete(id);
+	}
+
+	@Post('/refresh-tokens/erase')
+	public async eraseRefreshToken(@Body('id') id: number) {
+		return await this.refreshTokens.refreshTokenErase(id);
+	}
+
+
+
+	// searchs
+	@Get('/elastic-search-reviews')
+	public async getReviewForSearchAll(@Query('page') page: number = 1) {
+		return await this.searchReview.getReviewForSearchAll({withDeleted: true, limit: this.countRows, offset: (page-1)*this.countRows});
+	}
+
+	@Get('/elastic-search-review/full')
+	public async getReviewIndexElasticSearch(@Query('reviewId') reviewId: number, @Query('searchId') searchId: string) {
+		return await this.searchReview.getDualReviewIndex(reviewId, searchId);
+	}
+
+	@Post('/elastic-search-review/indexing')
+	public async indexReviewElasticSearch(@Body('reviewId') reviewId: number) {
+		return await this.searchReview.createIndex(reviewId);
+	}
+
+	@Post('/elastic-search-review/delete-index')
+	public async deleteIndexReviewElasticSearch(@Body('reviewId') reviewId: number, @Body('searchId') searchId: string) {
+		return await this.searchReview.deleteIndex(reviewId, searchId);
 	}
 
 
@@ -353,12 +386,13 @@ export class AdminController {
 
 	@Post('/reviews/add')
 	public async addReview(@Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[], @Body('blocked') blocked: boolean) {
-		return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
+		//return await this.reviews.createReview(description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
+		return await this.searchReview.createReviewWithIndexing({description, text, authorRating, userId, titleId, groupId, draft, tags, blocked});
 	}
 
 	@Post('/reviews/edit')
 	public async editReview(@Body('id') id: number, @Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[], @Body('blocked') blocked: boolean) {
-		return await this.reviews.editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked);
+		return await this.searchReview.updateReviewWithIndexing({id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked});
 	}
 
 	@Post('/reviews/remove')
@@ -373,7 +407,8 @@ export class AdminController {
 
 	@Post('/reviews/delete')
 	public async deleteReview(@Body('id') id: number) {
-		return await this.reviews.deleteReview(id);
+		//return await this.reviews.deleteReview(id);
+		return await this.searchReview.deleteReviewWithDeleteIndex(id);
 	}
 
 	@Get('/review-tags')
@@ -525,12 +560,14 @@ export class AdminController {
 
 	@Post('/comments/add')
 	public async addComment(@Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('comment') comment: string, @Body('draft') draft: boolean, @Body('blocked') blocked: boolean) {
-		return await this.comments.createComment(reviewId, userId, comment, draft, blocked);
+		//return await this.comments.createComment(reviewId, userId, comment, draft, blocked);
+		return await this.searchComment.createCommentWithIndexing({reviewId, userId, comment, draft, blocked});
 	}
 
 	@Post('/comments/edit')
 	public async editComment(@Body('id') id: number, @Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('comment') comment: string, @Body('draft') draft: boolean, @Body('blocked') blocked: boolean) {
-		return await this.comments.editComment(id, reviewId, userId, comment, draft, blocked);
+		//return await this.comments.editComment(id, reviewId, userId, comment, draft, blocked);
+		return await this.searchComment.updateCommentWithIndexing({id, reviewId, userId, comment, draft, blocked});
 	}
 
 	@Post('/comments/remove')
@@ -545,6 +582,7 @@ export class AdminController {
 
 	@Post('/comments/delete')
 	public async deleteComment(@Body('id') id: number) {
-		return await this.comments.deleteComment(id);
+		//return await this.comments.deleteComment(id);
+		return await this.searchComment.deleteCommentWithIndexing(id);
 	}
 }

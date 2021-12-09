@@ -22,7 +22,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 			//passReqToCallback: true,
 		});
 	}
-	
+
 	async validate(payload: any) {
 		const user: any = await this.usersService.checkUserId(payload.id);
 		return {id: user.id, roles: user.roles.map((entry) => {return entry.role})};

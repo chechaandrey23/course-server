@@ -14,4 +14,8 @@ export declare class RefreshTokenService {
     refreshTokenDelete(id: number): Promise<{
         id: number;
     }>;
+    refreshTokenErase(id: number, withDeleted?: boolean): Promise<{
+        id: number;
+        dateEndRT1: any;
+    }>;
 }

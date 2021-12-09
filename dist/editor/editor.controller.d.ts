@@ -30,12 +30,9 @@ export declare class EditorController {
     protected countRows: number;
     getReviewAll(req: any, page: number, tags: number[], titles: number[], groups: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
     getFullReview(req: any, id: number): Promise<import("../entries/reviews/review.model").Review>;
-    newReview(req: any): Promise<import("../entries/reviews/review.model").Review>;
-    editReview(req: any, id: number, description: string, text: string, authorRating: number, titleId: number, groupId: number, draft: boolean, tags: number[]): Promise<import("../entries/reviews/review.model").Review>;
-    removeReview(req: any, id: number): Promise<{
-        id: number;
-        deletedAt: string;
-    }>;
+    newReview(req: any): Promise<void>;
+    editReview(req: any, id: number, description: string, text: string, authorRating: number, titleId: number, groupId: number, draft: boolean, tags: number[]): Promise<void>;
+    removeReview(req: any, id: number): Promise<void>;
     newTitle(title: string, description: string): Promise<import("../entries/titles/title.model").Title>;
     newTag(tag: string): Promise<import("../entries/tags/tag.model").Tag>;
     protected countImageRows: number;

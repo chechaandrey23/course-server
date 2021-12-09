@@ -11,6 +11,10 @@ export const REFRESH_TOKEN_SALT_ROUNDS = 10;
 export const REFRESH_TOKEN_SALT_SECRET_1 = 'I7S56';
 export const REFRESH_TOKEN_SALT_SECRET_2 = 'NJ893';
 
+export const ELASTIC_SEARCH_HOST = process.env.ELASTIC_SEARCH_HOST || 'http://localhost:9200';// 'https://test-search-course.es.us-central1.gcp.cloud.es.io:9243';// 
+export const ELASTIC_SEARCH_USERNAME = process.env.ELASTIC_SEARCH_USERNAME || 'elastic';
+export const ELASTIC_SEARCH_PASSWORD = process.env.ELASTIC_SEARCH_PASSWORD || 'changeme';// '06erfmbEckCP8IoPPKUmkp1J';
+
 export const GITHUB_CLIENT_ID = 'fa3f7124fe705f856d73';
 export const GITHUB_CLIENT_SECRET = '8f327ca7f4193b02906d881a35400cba232a8dc1';
 export const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL || 'http://localhost:3039/auth/api/github/callback';

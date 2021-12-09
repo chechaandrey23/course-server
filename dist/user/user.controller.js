@@ -82,7 +82,7 @@ let UserController = class UserController {
         return await this.comments.getAutoUpdateCommentAll(time, reviewId, true, false);
     }
     async newComment(req, reviewId, comment) {
-        return await this.comments.createComment(reviewId, req.user.id, comment, false, false);
+        throw new Error('add new Comment NOT IMPLEMENTED');
     }
 };
 __decorate([

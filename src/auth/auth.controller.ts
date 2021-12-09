@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Post, Param, Query, Request, UseGuards, ConflictException, Redirect} from '@nestjs/common';
+import {Body, Controller, Get, Post, Param, Query, Request, UseGuards, ConflictException, Redirect, NotAcceptableException} from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
 
 import {RefreshTokenService} from '../entries/refreshtoken/refresh.token.service';
@@ -40,18 +40,18 @@ export class AuthController {
 
 	public async socialAuth() {}
 
-	@UseGuards(JWTAccessAuthGuard)
+	//@UseGuards(JWTAccessAuthGuard)
 	@Post('/logout')
 	public async logOut(@Request() req) {
 		const user = req.user;
 
 		const cookies = this.authService.getCookiesForLogOut();
 
-		await this.refreshTokenService.deleteRefreshTokenAll(user.id);
+		if(user && user.id) await this.refreshTokenService.deleteRefreshTokenAll(user.id);
 
 		req.res.setHeader('Set-Cookie', cookies);
 
-		return {id: user.id, roles: user.roles};
+		return {id: user?.id, roles: user?.roles};
 	}
 
 	@Post('/registration')
@@ -82,7 +82,18 @@ export class AuthController {
 		const access = this.authService.getCookieWithJwtAccess(user.id, user.roles);
 		const refresh = this.authService.getCookieWithJwtRefresh(user.id, user.roles);
 
-		await this.refreshTokenService.replaceRefreshToken(user.id, req.cookies?.Refresh, refresh.token, JWT_REFRESH_EXPIRATION_TIME);
+		try {
+			await this.refreshTokenService.replaceRefreshToken(user.id, req.cookies?.Refresh, refresh.token, JWT_REFRESH_EXPIRATION_TIME);
+		} catch(e) {
+			if(e instanceof NotAcceptableException) {
+				req.res.setHeader('Set-Cookie', [
+					'Access=; HttpOnly; Path=/; Max-Age=0',
+					'Refresh=; HttpOnly; Path=/; Max-Age=0',
+					'Roles=; Path=/; Max-Age=0'
+				]);
+			}
+			throw e;
+		}
 
 		req.res.setHeader('Set-Cookie', [access.cookie, refresh.cookie, this.authService.getCookieRoles(user.roles)]);
 

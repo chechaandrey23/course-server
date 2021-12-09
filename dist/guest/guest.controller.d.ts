@@ -11,6 +11,7 @@ import { TagsService } from '../entries/tags/tags.service';
 import { RatingsService } from '../entries/ratings/ratings.service';
 import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
+import { SearchReviewService } from '../entries/reviews/search.review.service';
 export declare class GuestController {
     private users;
     private roles;
@@ -25,7 +26,8 @@ export declare class GuestController {
     private ratings;
     private likes;
     private comments;
-    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService);
+    private searchReview;
+    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, searchReview: SearchReviewService);
     protected readonly countRows: number;
     protected readonly countTags: number;
     getDescriptionOrderReviews(page: number, tags: number[], titles: number[], groups: number[], authors: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
@@ -36,4 +38,5 @@ export declare class GuestController {
     getGroupAll(): Promise<import("../entries/groups/group.model").Group[]>;
     getTitlePart(query: string): Promise<import("../entries/titles/title.model").Title[]>;
     getTagPart(query: string): Promise<import("../entries/tags/tag.model").Tag[]>;
+    getReviewSearchAll(query: string, page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
 }
