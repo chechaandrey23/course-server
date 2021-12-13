@@ -22,6 +22,13 @@ import {RefreshTokenService} from '../entries/refreshtoken/refresh.token.service
 import {SearchReviewService} from '../entries/reviews/search.review.service';
 import {SearchCommentService} from '../entries/comments/search.comment.service';
 
+import {JWTAccessAuthGuard} from '../auth/guards/jwt.access.auth.guard';
+import {JWTIsRefreshAuthGuard} from '../auth/guards/jwt.is.refresh.auth.guard';
+import {AdminRoleGuard} from '../auth/guards/admin.role.guard';
+
+//@UseGuards(AdminRoleGuard)
+//@UseGuards(JWTAccessAuthGuard)
+//@UseGuards(JWTIsRefreshAuthGuard)
 @Controller('admin/api')
 export class AdminController {
 	constructor(
@@ -71,7 +78,7 @@ export class AdminController {
 
 	@Get('/elastic-search-review/full')
 	public async getReviewIndexElasticSearch(@Query('reviewId') reviewId: number, @Query('searchId') searchId: string) {
-		return await this.searchReview.getDualReviewIndex(reviewId, searchId);
+		return await this.searchReview.getDualReviewIndex(reviewId, searchId, true);
 	}
 
 	@Post('/elastic-search-review/indexing')
@@ -152,27 +159,27 @@ export class AdminController {
 
 	@Post('/user-info/add')
 	public async addUserInfo(@Body('userId') userId: number) {
-		return await this.userInfos.createUserInfo(userId);
+		return await this.userInfos.createUserInfo({userId});
 	}
 
 	@Post('/user-info/edit')
 	public async editUserInfo(@Body('id') id: number, @Body('userId') userId: number, @Body('first_name') first_name: string, @Body('last_name') last_name: string, @Body('theme') themeId: number, @Body('lang') langId: number) {
-		return await this.userInfos.editUserInfo(id, userId, first_name, last_name, themeId, langId);
+		return await this.userInfos.editUserInfo({id, userId, first_name, last_name, themeId, langId, superEdit: true});
 	}
 
 	@Post('/user-info/remove')
 	public async removeUserInfo(@Body('id') id: number) {
-		return await this.userInfos.removeUserInfo(id);
+		return await this.userInfos.removeUserInfo({id, superEdit: true});
 	}
 
 	@Post('/user-info/restore')
 	public async restoreUserInfo(@Body('id') id: number) {
-		return await this.userInfos.restoreUserInfo(id);
+		return await this.userInfos.restoreUserInfo({id, superEdit: true});
 	}
 
 	@Post('/user-info/delete')
 	public async deleteUserInfo(@Body('id') id: number) {
-		return await this.userInfos.deleteUserInfo(id);
+		return await this.userInfos.deleteUserInfo({id, superEdit: true});
 	}
 
 
@@ -392,23 +399,25 @@ export class AdminController {
 
 	@Post('/reviews/edit')
 	public async editReview(@Body('id') id: number, @Body('description') description: string, @Body('text') text: string, @Body('authorRating') authorRating: number, @Body('userId') userId: number, @Body('titleId') titleId: number, @Body('groupId') groupId: number, @Body('draft') draft: boolean, @Body('tags') tags: number[], @Body('blocked') blocked: boolean) {
-		return await this.searchReview.updateReviewWithIndexing({id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked});
+		return await this.searchReview.updateReviewWithIndexing({id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked, superEdit: true});
 	}
 
 	@Post('/reviews/remove')
 	public async removeReview(@Body('id') id: number) {
-		return await this.reviews.removeReview(id);
+		//return await this.reviews.removeReview(id);
+		return await this.searchReview.removeReviewWithDeleteIndex({id, superEdit: true});
 	}
 
 	@Post('/reviews/restore')
 	public async restoreReview(@Body('id') id: number) {
-		return await this.reviews.restoreReview(id);
+		//return await this.reviews.restoreReview(id);
+		return await this.searchReview.restoreReviewWithDeleteIndex({id, superEdit: true});
 	}
 
 	@Post('/reviews/delete')
 	public async deleteReview(@Body('id') id: number) {
 		//return await this.reviews.deleteReview(id);
-		return await this.searchReview.deleteReviewWithDeleteIndex(id);
+		return await this.searchReview.deleteReviewWithDeleteIndex({id, superEdit: true});
 	}
 
 	@Get('/review-tags')
@@ -419,34 +428,34 @@ export class AdminController {
 
 	// images
 	@Get('/images')
-	public async getImages(@Query('page') page: number = 1) {
-		return await this.images.getImageAll(this.countRows, (page-1)*this.countRows, true);
+	public async getImages(@Query('page') page: number = 1) {// this.countRows, (page-1)*this.countRows, true
+		return await this.images.getImageAll({withDeleted: true, limit: this.countRows, offset: (page-1)*this.countRows});
 	}
 
 	@Post('/images/add')
 	@UseInterceptors(FilesInterceptor('images[]', 3))
 	public async addImage(@Body('userId') userId: number, @UploadedFiles() images: Array<Express.Multer.File>) {
-		return await this.images.createImage(/*reviewId, */userId, images);
+		return await this.images.createImage({userId, images});
 	}
 
 	@Post('/images/edit')
 	public async editImage(@Body('id') id: number, @Body('userId') userId: number) {
-		return await this.images.editImage(id, /*reviewId, */userId);
+		return await this.images.editImage({id, userId, superEdit: true});
 	}
 
 	@Post('/images/remove')
 	public async removeImage(@Body('id') id: number) {
-		return await this.images.removeImage(id);
+		return await this.images.removeImage({id, superEdit: true});
 	}
 
 	@Post('/images/restore')
 	public async restoreImage(@Body('id') id: number) {
-		return await this.images.restoreImage(id);
+		return await this.images.restoreImage({id, superEdit: true});
 	}
 
 	@Post('/images/delete')
 	public async deleteImage(@Body('id') id: number) {
-		return await this.images.deleteImage(id);
+		return await this.images.deleteImage({id, superEdit: true});
 	}
 
 
@@ -495,27 +504,27 @@ export class AdminController {
 
 	@Post('/ratings/add')
 	public async addRating(@Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('rating') rating: number) {
-		return await this.ratings.createRating(reviewId, userId, rating);
+		return await this.ratings.createRating({reviewId, userId, rating});
 	}
 
 	@Post('/ratings/edit')
 	public async editRating(@Body('id') id: number, @Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('rating') rating: number) {
-		return await this.ratings.editRating(id, reviewId, userId, rating);
+		return await this.ratings.editRating({id, reviewId, userId, rating, superEdit: true});
 	}
 
 	@Post('/ratings/remove')
 	public async removeRating(@Body('id') id: number) {
-		return await this.ratings.removeRating(id);
+		return await this.ratings.removeRating({id, superEdit: true});
 	}
 
 	@Post('/ratings/restore')
 	public async restoreRating(@Body('id') id: number) {
-		return await this.ratings.restoreRating(id);
+		return await this.ratings.restoreRating({id, superEdit: true});
 	}
 
 	@Post('/ratings/delete')
 	public async deleteRating(@Body('id') id: number) {
-		return await this.ratings.deleteRating(id);
+		return await this.ratings.deleteRating({id, superEdit: true});
 	}
 
 
@@ -528,27 +537,27 @@ export class AdminController {
 
 	@Post('/likes/add')
 	public async addLike(@Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('like') like: boolean) {
-		return await this.likes.createLike(reviewId, userId, like);
+		return await this.likes.createLike({reviewId, userId, like});
 	}
 
 	@Post('/likes/edit')
 	public async editLike(@Body('id') id: number, @Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('like') like: boolean) {
-		return await this.likes.editLike(id, reviewId, userId, like);
+		return await this.likes.editLike({id, reviewId, userId, like, superEdit: true});
 	}
 
 	@Post('/likes/remove')
 	public async removeLike(@Body('id') id: number) {
-		return await this.likes.removeLike(id);
+		return await this.likes.removeLike({id, superEdit: true});
 	}
 
 	@Post('/likes/restore')
 	public async restoreLike(@Body('id') id: number) {
-		return await this.likes.restoreLike(id);
+		return await this.likes.restoreLike({id, superEdit: true});
 	}
 
 	@Post('/likes/delete')
 	public async deleteLike(@Body('id') id: number) {
-		return await this.likes.deleteLike(id);
+		return await this.likes.deleteLike({id, superEdit: true});
 	}
 
 
@@ -567,22 +576,22 @@ export class AdminController {
 	@Post('/comments/edit')
 	public async editComment(@Body('id') id: number, @Body('reviewId') reviewId: number, @Body('userId') userId: number, @Body('comment') comment: string, @Body('draft') draft: boolean, @Body('blocked') blocked: boolean) {
 		//return await this.comments.editComment(id, reviewId, userId, comment, draft, blocked);
-		return await this.searchComment.updateCommentWithIndexing({id, reviewId, userId, comment, draft, blocked});
+		return await this.searchComment.updateCommentWithIndexing({id, reviewId, userId, comment, draft, blocked, superEdit: true});
 	}
 
 	@Post('/comments/remove')
 	public async removeComment(@Body('id') id: number) {
-		return await this.comments.removeComment(id);
+		return await this.searchComment.removeCommentWithIndexing({id, superEdit: true});
 	}
 
 	@Post('/comments/restore')
 	public async restoreComment(@Body('id') id: number) {
-		return await this.comments.restoreComment(id);
+		return await this.searchComment.restoreCommentWithIndexing({id, superEdit: true});
 	}
 
 	@Post('/comments/delete')
 	public async deleteComment(@Body('id') id: number) {
 		//return await this.comments.deleteComment(id);
-		return await this.searchComment.deleteCommentWithIndexing(id);
+		return await this.searchComment.deleteCommentWithIndexing({id, superEdit: true});
 	}
 }

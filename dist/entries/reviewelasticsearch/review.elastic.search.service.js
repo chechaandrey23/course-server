@@ -16,6 +16,16 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
     constructor(elasticsearchService) {
         this.elasticsearchService = elasticsearchService;
         this.index = 'reviews';
+        this.scriptUpdate = `
+		boolean updated = false;
+		for(def entry : ctx._source.comments) {
+			if(entry.id == params.comment.id) {
+				updated = true;
+				entry.comment = params.comment.comment;
+			}
+		}
+		if(!updated) ctx._source.comments.add(params.comment);
+	`;
     }
     async indexReview(review) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
@@ -23,7 +33,9 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
             index: this.index,
             body: {
                 id: review.id,
-                skip: !!(review.blocked || review.draft),
+                blocked: !!review.blocked,
+                draft: !!review.draft,
+                removed: !!review.deletedAt,
                 description: review.description || '',
                 text: review.text || '',
                 group: ((_b = (_a = review.groupTitle) === null || _a === void 0 ? void 0 : _a.group) === null || _b === void 0 ? void 0 : _b.group) || '',
@@ -43,7 +55,7 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
             body: {
                 query: {
                     query_string: {
-                        query: `(*${text}*) AND skip:false`,
+                        query: `(*${text}*) AND blocked:false AND draft:false AND removed:false`,
                         fields: [
                             'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments.comment'
                         ]
@@ -59,8 +71,6 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
             return acc;
         }, { ids: [], searchIds: [] });
     }
-    async hideReviewIndex(id) { }
-    async showReviewIndex(id) { }
     async getReviewIndex(id) {
         return await this.elasticsearchService.search({ index: this.index, size: 1, body: {
                 query: {
@@ -92,7 +102,9 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         const newBody = {
             id: review.id,
-            skip: !!(review.blocked || review.draft),
+            blocked: !!review.blocked,
+            draft: !!review.draft,
+            removed: !!review.deletedAt,
             description: review.description || '',
             text: review.text || '',
             group: ((_b = (_a = review.groupTitle) === null || _a === void 0 ? void 0 : _a.group) === null || _b === void 0 ? void 0 : _b.group) || '',
@@ -125,6 +137,50 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
         return await this.elasticsearchService.update({ id, index: this.index, body: {
                 script: {
                     inline: this.getScriptUpdate(review)
+                }
+            } });
+    }
+    async removeReview(id) {
+        return await this.elasticsearchService.updateByQuery({
+            index: this.index,
+            body: {
+                query: {
+                    match: {
+                        id: id,
+                    }
+                },
+                script: {
+                    inline: `ctx._source.removed='true';`
+                }
+            }
+        });
+    }
+    async removeReviewWithId(id) {
+        return await this.elasticsearchService.update({ id, index: this.index, body: {
+                script: {
+                    inline: `ctx._source.removed='true';`
+                }
+            } });
+    }
+    async restoreReview(id) {
+        return await this.elasticsearchService.updateByQuery({
+            index: this.index,
+            body: {
+                query: {
+                    match: {
+                        id: id,
+                    }
+                },
+                script: {
+                    inline: `ctx._source.removed='false';`
+                }
+            }
+        });
+    }
+    async restoreReviewWithId(id) {
+        return await this.elasticsearchService.update({ id, index: this.index, body: {
+                script: {
+                    inline: `ctx._source.removed='false';`
                 }
             } });
     }
@@ -179,11 +235,13 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
                     }
                 },
                 script: {
-                    source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+                    source: this.scriptUpdate,
                     lang: "painless",
                     params: {
-                        commentId: commentId,
-                        comment: comment
+                        comment: {
+                            id: commentId,
+                            comment: comment
+                        }
                     }
                 }
             }
@@ -240,11 +298,13 @@ let ReviewElasticSearchService = class ReviewElasticSearchService {
                     }
                 },
                 script: {
-                    source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+                    source: this.scriptUpdate,
                     lang: "painless",
                     params: {
-                        commentId: commentId,
-                        comment: comment
+                        comment: {
+                            id: commentId,
+                            comment: comment
+                        }
                     }
                 }
             }

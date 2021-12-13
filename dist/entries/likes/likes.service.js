@@ -28,68 +28,113 @@ let LikesService = class LikesService {
         this.sequelize = sequelize;
         this.likes = likes;
     }
-    async createLike(reviewId, userId, like) {
+    async createLike(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                let res0 = await this.likes.findOne({ where: { reviewId, userId }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                let res0 = await this.likes.findOne({ where: { reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
                 if (res0)
-                    throw new common_1.ConflictException({ reviewId, userId, reason: `User (userId: ${userId} / reviewId: ${reviewId}) can like only once` });
-                let res = await this.likes.create({ reviewId, userId, like: !!like }, { transaction: t });
+                    throw new common_1.ConflictException({
+                        reviewId: opts.reviewId, userId: opts.userId, reason: `User (userId: ${opts.userId} / reviewId: ${opts.reviewId}) can like only once`
+                    });
+                let res = await this.likes.create({ reviewId: opts.reviewId, userId: opts.userId, like: !!opts.like }, { transaction: t });
                 return await this.likes.findOne({ include: [
                         { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] },
                         { model: review_model_1.Review, attributes: ['id'], include: [{ model: title_groups_model_1.TitleGroups, include: [
                                         { model: title_model_1.Title, attributes: ['id', 'title'] },
                                         { model: group_model_1.Group, attributes: ['id', 'group'] }
                                     ] }] }
-                    ], where: { id: res.getDataValue('id'), reviewId, userId }, transaction: t });
+                    ], where: { id: res.getDataValue('id'), reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
             });
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async editLike(id, reviewId, userId, like) {
+    async editLike(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                await this.likes.update({ like: !!like, reviewId, userId }, { where: { id }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (!opts.superEdit) {
+                    let res = await this.likes.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`EDIT: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.likes.update({ like: !!opts.like }, { where: { id: opts.id, reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
+                }
+                else {
+                    await this.likes.update({ like: !!opts.like, reviewId: opts.reviewId, userId: opts.userId }, { where: { id: opts.id }, transaction: t });
+                }
                 return await this.likes.findOne({ include: [
                         { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] },
                         { model: review_model_1.Review, attributes: ['id'], include: [{ model: title_groups_model_1.TitleGroups, include: [
                                         { model: title_model_1.Title, attributes: ['id', 'title'] },
                                         { model: group_model_1.Group, attributes: ['id', 'group'] }
                                     ] }] }
-                    ], where: { id, reviewId, userId }, transaction: t });
+                    ], where: { id: opts.id, reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async removeLike(id) {
+    async removeLike(opts) {
         try {
-            await this.likes.destroy({ where: { id } });
-            return { id: id, deletedAt: (new Date()).toString() };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.likes.destroy({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.likes.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`REMOVE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.likes.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: (new Date()).toString() };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async restoreLike(id) {
+    async restoreLike(opts) {
         try {
-            await this.likes.restore({ where: { id } });
-            return { id: id, deletedAt: null };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.likes.restore({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.likes.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`RESTORE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.likes.restore({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: null };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async deleteLike(id) {
+    async deleteLike(opts) {
         try {
-            await this.likes.destroy({ where: { id }, force: true });
-            return { id: id };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.likes.destroy({ where: { id: opts.id }, transaction: t, force: true });
+                }
+                else {
+                    let res = await this.likes.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`DESTROY: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.likes.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t, force: true });
+                }
+                return { id: opts.id };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
     async getLikeAll(count, offset = 0, withDeleted = false) {

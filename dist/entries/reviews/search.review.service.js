@@ -34,9 +34,11 @@ let SearchReviewService = class SearchReviewService {
         let data = await this.reviewElasticSearch.searchReviews(query, opts.offset || 0, opts.limit || 0);
         return await this.reviewsService.getReviewAll(Object.assign(Object.assign({}, opts), { getByIds: data.ids }));
     }
-    async getDualReviewIndex(reviewId, searchId) {
+    async getDualReviewIndex(reviewId, searchId, withDeleted = false) {
         return {
-            review: await this.reviewsService.getReviewOne({ reviewId, withCommentAll: true }),
+            review: await this.reviewsService.getReviewOne({
+                reviewId, withCommentAll: true, withDeleted, condCommentsPublic: true, condCommentsBlocked: false, condCommentsWithDeleted: false
+            }),
             index: searchId ? await this.reviewElasticSearch.getReviewIndexWithIndex(searchId) : null
         };
     }
@@ -98,17 +100,43 @@ let SearchReviewService = class SearchReviewService {
             (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async deleteReviewWithDeleteIndex(reviewId) {
+    async deleteReviewWithDeleteIndex(opts) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
-                let data = await this.reviewsService.deleteReview(reviewId, t);
-                let res = await this.reviewElasticSearch.deleteReview(reviewId);
+                let data = await this.reviewsService.deleteReview(Object.assign(Object.assign({}, opts), { transaction: t }));
+                let res = await this.reviewElasticSearch.deleteReview(opts.id);
                 console.log(res);
-                return { id: data.id };
+                return data;
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id: reviewId });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
+        }
+    }
+    async removeReviewWithDeleteIndex(opts) {
+        try {
+            return await this.sequelize.transaction({}, async (t) => {
+                let data = await this.reviewsService.removeReview(Object.assign(Object.assign({}, opts), { transaction: t }));
+                let res = await this.reviewElasticSearch.removeReview(opts.id);
+                console.log(res);
+                return data;
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
+        }
+    }
+    async restoreReviewWithDeleteIndex(opts) {
+        try {
+            return await this.sequelize.transaction({}, async (t) => {
+                let data = await this.reviewsService.restoreReview(Object.assign(Object.assign({}, opts), { transaction: t }));
+                let res = await this.reviewElasticSearch.restoreReview(opts.id);
+                console.log(res);
+                return data;
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
 };

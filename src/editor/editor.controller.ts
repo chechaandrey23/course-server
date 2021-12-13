@@ -38,7 +38,7 @@ export class EditorController {
 		private tags: TagsService,
 		private ratings: RatingsService,
 		private likes: LikesService,
-		private comments: CommentsService
+		private comments: CommentsService,
 	) {}
 
 	protected countRows: number = 20;
@@ -96,14 +96,15 @@ export class EditorController {
 	protected countImageRows: number = 20;
 
 	@Get('/images')
-	public async getImageAll(@Query('page') page: number = 1) {
-		return await this.images.getImageAll(this.countImageRows, (page-1)*this.countImageRows, false);
+	public async getImageAll(@Request() req, @Query('page') page: number = 1) {
+		return await this.images.getImageAll({limit: this.countRows, offset: (page-1)*this.countRows, condUserId: req.user.id});
+		//return await this.images.getImageAll(this.countImageRows, (page-1)*this.countImageRows, false);
 	}
 
 	@UseGuards(JWTIsRefreshAuthGuard)
 	@Post('/image-new')
 	@UseInterceptors(FilesInterceptor('images[]', 1))
 	public async newImage(@Request() req, @UploadedFiles() images: Array<Express.Multer.File>) {
-		return await this.images.createImage(req.user.id, images);
+		return await this.images.createImage({userId: req.user.id, images});
 	}
 }

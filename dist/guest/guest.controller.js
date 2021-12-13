@@ -50,13 +50,16 @@ let GuestController = class GuestController {
     }
     async getDescriptionOrderReviews(page = 1, tags, titles, groups, authors, sortField, sortType) {
         return await this.reviews.getReviewAll({
-            condPublic: true, limit: this.countRows, offset: (page - 1) * this.countRows,
+            condPublic: true, condBlocked: false, limit: this.countRows, offset: (page - 1) * this.countRows,
             withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
             sortField: sortField, sortType: sortType
         });
     }
     async getFullReview(id) {
-        return await this.reviews.getReviewOne({ reviewId: id, condPublic: true });
+        return await this.reviews.getReviewOne({ reviewId: id, condPublic: true, condBlocked: false });
+    }
+    async getShortOtherReviews(groupTitleId) {
+        return await this.reviews.getShortOtherReviewAll(groupTitleId);
     }
     async getTagOrderReviews(page = 1, order = false) {
         return await this.tags.getTagAll({ limit: this.countTags, offset: (page - 1) * this.countTags, order: !!order });
@@ -74,7 +77,7 @@ let GuestController = class GuestController {
         return await this.tags.getPartTagAll(this.countRows, 0, query);
     }
     async getReviewSearchAll(query, page = 1) {
-        return await this.searchReview.getSearchAll(query, { limit: this.countRows, offset: (page - 1) * this.countRows, condPublic: true });
+        return await this.searchReview.getSearchAll(query, { limit: this.countRows, offset: (page - 1) * this.countRows, condPublic: true, blocked: false });
     }
 };
 __decorate([
@@ -97,6 +100,13 @@ __decorate([
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getFullReview", null);
+__decorate([
+    (0, common_1.Get)('/other-short-reviews/:groupTitleId'),
+    __param(0, (0, common_1.Param)('groupTitleId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], GuestController.prototype, "getShortOtherReviews", null);
 __decorate([
     (0, common_1.Get)(['/tags', '/tags/order-:order']),
     __param(0, (0, common_1.Query)('page')),

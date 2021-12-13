@@ -6,11 +6,22 @@ export interface CreateComment {
     userId: number;
     comment: string;
     draft: boolean;
-    blocked: boolean;
+    blocked?: boolean;
     transaction?: Transaction;
 }
 export interface UpdateComment extends CreateComment {
     id: number;
+    superEdit?: boolean;
+}
+export interface DeleteComment {
+    id: number;
+    transaction?: Transaction;
+    userId?: number;
+    superEdit?: boolean;
+}
+export interface RemoveComment extends DeleteComment {
+}
+export interface RestoreComment extends DeleteComment {
 }
 export declare class CommentsService {
     private sequelize;
@@ -18,15 +29,15 @@ export declare class CommentsService {
     constructor(sequelize: Sequelize, comments: typeof Comment);
     createComment(opts: CreateComment): Promise<Comment>;
     editComment(opts: UpdateComment): Promise<Comment>;
-    removeComment(id: number): Promise<{
+    removeComment(opts: RemoveComment): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreComment(id: number): Promise<{
+    restoreComment(opts: RestoreComment): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteComment(id: number, transaction?: Transaction): Promise<{
+    deleteComment(opts: DeleteComment): Promise<{
         id: number;
     }>;
     getCommentAll(count: number, offset?: number, withDeleted?: boolean): Promise<Comment[]>;

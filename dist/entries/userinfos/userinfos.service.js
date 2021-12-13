@@ -29,9 +29,11 @@ let UserInfosService = class UserInfosService {
         this.langs = langs;
         this.users = users;
     }
-    async createUserInfo(userId) {
+    async createUserInfo(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
+            const transaction = opts.transaction;
+            const userId = opts.userId;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
                 let entryLang = await this.langs.findOne({ attributes: ['id'], transaction: t, paranoid: false });
                 if (!entryLang)
                     throw new common_1.ConflictException({ userId, reason: `Unable to add "UserInfo" entry because no entries exist in "Lang"` });
@@ -52,45 +54,84 @@ let UserInfosService = class UserInfosService {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async editUserInfo(id, userId, first_name, last_name, themeId, langId) {
+    async editUserInfo(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                await this.userInfos.update({ userId, first_name, last_name, themeId, langId }, { where: { id }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (!opts.superEdit) {
+                    let res = await this.userInfos.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`EDIT: User "${opts.userId}" cannot edit content that is not the creator`);
+                }
+                await this.userInfos.update(Object.assign(Object.assign({}, (opts.superEdit ? { userId: opts.userId } : {})), { first_name: opts.first_name, last_name: opts.last_name, themeId: opts.themeId, langId: opts.langId }), { where: Object.assign({ id: opts.id }, (opts.superEdit ? {} : { userId: opts.userId })), transaction: t });
                 return await this.userInfos.findOne({
                     include: [lang_model_1.Lang, theme_model_1.Theme, { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] }],
-                    where: { id }, transaction: t
+                    where: { id: opts.id }, transaction: t
                 });
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async removeUserInfo(id) {
+    async removeUserInfo(opts) {
         try {
-            await this.userInfos.destroy({ where: { id } });
-            return { id: id, deletedAt: (new Date()).toString() };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.userInfos.destroy({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.userInfos.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`REMOVE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.userInfos.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: (new Date()).toString() };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async restoreUserInfo(id) {
+    async restoreUserInfo(opts) {
         try {
-            await this.userInfos.restore({ where: { id } });
-            return { id: id, deletedAt: null };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.userInfos.restore({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.userInfos.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`RESTORE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.userInfos.restore({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: null };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async deleteUserInfo(id) {
+    async deleteUserInfo(opts) {
         try {
-            await this.userInfos.destroy({ where: { id }, force: true });
-            return { id: id };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.userInfos.destroy({ where: { id: opts.id }, transaction: t, force: true });
+                }
+                else {
+                    let res = await this.userInfos.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`DESTROY: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.userInfos.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t, force: true });
+                }
+                return { id: opts.id };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
     async getUserInfoAll(count, offset = 0, withDeleted = false) {

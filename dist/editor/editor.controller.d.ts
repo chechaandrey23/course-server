@@ -36,6 +36,6 @@ export declare class EditorController {
     newTitle(title: string, description: string): Promise<import("../entries/titles/title.model").Title>;
     newTag(tag: string): Promise<import("../entries/tags/tag.model").Tag>;
     protected countImageRows: number;
-    getImageAll(page?: number): Promise<import("../entries/images/image.model").Image[]>;
+    getImageAll(req: any, page?: number): Promise<import("../entries/images/image.model").Image[]>;
     newImage(req: any, images: Array<Express.Multer.File>): Promise<import("../entries/images/image.model").Image[]>;
 }

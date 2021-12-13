@@ -27,6 +27,7 @@ export interface ReviewSearch {
     }>;
     blocked: boolean;
     draft: boolean;
+    deletedAt: any;
 }
 export interface ReviewCommentBody {
     id: number;
@@ -34,7 +35,9 @@ export interface ReviewCommentBody {
 }
 export interface ReviewSearchBody {
     id: number;
-    skip: boolean;
+    blocked: boolean;
+    draft: boolean;
+    removed: boolean;
     description: string;
     text: string;
     group: string;
@@ -62,8 +65,6 @@ export declare class ReviewElasticSearchService {
         ids: any[];
         searchIds: any[];
     }>;
-    hideReviewIndex(id: string): Promise<void>;
-    showReviewIndex(id: string): Promise<void>;
     getReviewIndex(id: number): Promise<import("@elastic/elasticsearch").ApiResponse<ReviewSearchResult, unknown>>;
     getReviewIndexWithIndex(id: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReview(reviewId: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
@@ -71,8 +72,13 @@ export declare class ReviewElasticSearchService {
     protected getScriptUpdate(review: ReviewSearch): string;
     updateReview(review: ReviewSearch): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     updateReviewWithId(id: string, review: ReviewSearch): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    removeReview(id: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    removeReviewWithId(id: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    restoreReview(id: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    restoreReviewWithId(id: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     addReviewComment(reviewId: number, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReviewComment(reviewId: number, commentId: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
+    protected scriptUpdate: string;
     updateReviewComment(reviewId: number, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     addReviewCommentWithId(id: string, commentId: number, comment: string): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;
     deleteReviewCommentWithId(id: string, commentId: number): Promise<import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>>;

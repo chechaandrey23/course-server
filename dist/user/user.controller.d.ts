@@ -11,6 +11,8 @@ import { TagsService } from '../entries/tags/tags.service';
 import { RatingsService } from '../entries/ratings/ratings.service';
 import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
+import { SearchReviewService } from '../entries/reviews/search.review.service';
+import { SearchCommentService } from '../entries/comments/search.comment.service';
 export declare class UserController {
     private users;
     private roles;
@@ -25,7 +27,9 @@ export declare class UserController {
     private ratings;
     private likes;
     private comments;
-    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService);
+    private searchReview;
+    private searchComment;
+    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, searchReview: SearchReviewService, searchComment: SearchCommentService);
     protected readonly countRows: number;
     getDescriptionOrderReviews(req: any, page: number, tags: number[], titles: number[], groups: number[], authors: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
     getFullReview(req: any, id: number): Promise<import("../entries/reviews/review.model").Review>;
@@ -37,5 +41,11 @@ export declare class UserController {
     serUserLike(req: any, reviewId: number): Promise<import("../entries/likes/like.model").Like>;
     getComments(req: any, page: number, reviewId: any): Promise<import("../entries/comments/comment.model").Comment[]>;
     autoUpdateComments(req: any, time: number, reviewId: any): Promise<import("../entries/comments/comment.model").Comment[]>;
-    newComment(req: any, reviewId: number, comment: string): Promise<void>;
+    newComment(req: any, reviewId: number, comment: string): Promise<any>;
+    editComment(req: any, id: number, reviewId: number, comment: string): Promise<any>;
+    removeComment(req: any, id: number): Promise<{
+        id: number;
+        deletedAt: string;
+    }>;
+    getReviewSearchAll(query: string, page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
 }

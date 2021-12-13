@@ -28,68 +28,113 @@ let RatingsService = class RatingsService {
         this.sequelize = sequelize;
         this.ratings = ratings;
     }
-    async createRating(reviewId, userId, rating) {
+    async createRating(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                let res0 = await this.ratings.findOne({ where: { reviewId, userId }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                let res0 = await this.ratings.findOne({ where: { reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
                 if (res0)
-                    throw new common_1.ConflictException({ reviewId, userId, reason: `User (userId: ${userId} / reviewId: ${reviewId}) can vote only once` });
-                let res = await this.ratings.create({ reviewId, userId, userRating: rating }, { transaction: t });
+                    throw new common_1.ConflictException({
+                        reviewId: opts.reviewId, userId: opts.userId, reason: `User (userId: ${opts.userId} / reviewId: ${opts.reviewId}) can vote only once`
+                    });
+                let res = await this.ratings.create({ reviewId: opts.reviewId, userId: opts.userId, userRating: opts.rating }, { transaction: t });
                 return await this.ratings.findOne({ include: [
                         { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] },
                         { model: review_model_1.Review, attributes: ['id'], include: [{ model: title_groups_model_1.TitleGroups, include: [
                                         { model: title_model_1.Title, attributes: ['id', 'title'] },
                                         { model: group_model_1.Group, attributes: ['id', 'group'] }
                                     ] }] }
-                    ], where: { id: res.getDataValue('id'), reviewId, userId }, transaction: t });
+                    ], where: { id: res.getDataValue('id'), reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
             });
         }
         catch (e) {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async editRating(id, reviewId, userId, rating) {
+    async editRating(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                await this.ratings.update({ userRating: rating, reviewId, userId }, { where: { id }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (!opts.superEdit) {
+                    let res = await this.ratings.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`EDIT: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.ratings.update({ userRating: opts.rating }, { where: { id: opts.id, reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
+                }
+                else {
+                    await this.ratings.update({ userRating: opts.rating, reviewId: opts.reviewId, userId: opts.userId }, { where: { id: opts.id }, transaction: t });
+                }
                 return await this.ratings.findOne({ include: [
                         { model: user_model_1.User, attributes: ['id', 'user', 'social_id'] },
                         { model: review_model_1.Review, attributes: ['id'], include: [{ model: title_groups_model_1.TitleGroups, include: [
                                         { model: title_model_1.Title, attributes: ['id', 'title'] },
                                         { model: group_model_1.Group, attributes: ['id', 'group'] }
                                     ] }] }
-                    ], where: { id, reviewId, userId }, transaction: t });
+                    ], where: { id: opts.id, reviewId: opts.reviewId, userId: opts.userId }, transaction: t });
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async removeRating(id) {
+    async removeRating(opts) {
         try {
-            await this.ratings.destroy({ where: { id } });
-            return { id: id, deletedAt: (new Date()).toString() };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.ratings.destroy({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.ratings.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`REMOVE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.ratings.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: (new Date()).toString() };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async restoreRating(id) {
+    async restoreRating(opts) {
         try {
-            await this.ratings.restore({ where: { id } });
-            return { id: id, deletedAt: null };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.ratings.restore({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.ratings.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`RESTORE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.ratings.restore({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: null };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async deleteRating(id) {
+    async deleteRating(opts) {
         try {
-            await this.ratings.destroy({ where: { id }, force: true });
-            return { id: id };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.ratings.destroy({ where: { id: opts.id }, transaction: t, force: true });
+                }
+                else {
+                    let res = await this.ratings.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`DESTROY: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.ratings.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t, force: true });
+                }
+                return { id: opts.id };
+            });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
     async getRatingAll(count, offset = 0, withDeleted = false) {

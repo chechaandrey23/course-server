@@ -17,6 +17,9 @@ import {RatingsService} from '../entries/ratings/ratings.service';
 import {LikesService} from '../entries/likes/likes.service';
 import {CommentsService} from '../entries/comments/comments.service';
 
+import {SearchReviewService} from '../entries/reviews/search.review.service';
+import {SearchCommentService} from '../entries/comments/search.comment.service';
+
 import {JWTAccessAuthGuard} from '../auth/guards/jwt.access.auth.guard';
 
 import {UserRoleGuard} from '../auth/guards/user.role.guard';
@@ -38,18 +41,20 @@ export class UserController {
 		private tags: TagsService,
 		private ratings: RatingsService,
 		private likes: LikesService,
-		private comments: CommentsService
+		private comments: CommentsService,
+		private searchReview: SearchReviewService,
+		private searchComment: SearchCommentService
 	) {}
 
 	protected readonly countRows: number = 10;
 
-	@Get(['/reviews'])
+	@Get('/reviews')
 	public async getDescriptionOrderReviews(@Request() req, @Query('page') page: number = 1,
 											@Query('tags') tags: number[], @Query('titles') titles: number[],
 											@Query('groups') groups: number[], @Query('authors') authors: number[],
 											@Query('sortField') sortField: string, @Query('sortType') sortType: "ASC"|"DESC") {
 		return await this.reviews.getReviewAll({
-			condPublic: true, limit: this.countRows, offset: (page-1)*this.countRows,
+			condPublic: true, condBlocked: false, limit: this.countRows, offset: (page-1)*this.countRows,
 			withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
 			sortField: sortField, sortType: sortType,
 			forUserId: req.user.id
@@ -58,7 +63,7 @@ export class UserController {
 
 	@Get('/review/:id')
 	public async getFullReview(@Request() req, @Param('id') id: number) {
-		return await this.reviews.getReviewOne({reviewId: id, forUserId: req.user.id, condPublic: true});
+		return await this.reviews.getReviewOne({reviewId: id, forUserId: req.user.id, condPublic: true, condBlocked: false});
 	}
 
 	@Get('/user')
@@ -68,7 +73,7 @@ export class UserController {
 
 	@Post('/user-settings')
 	public async setUserSettings(@Request() req, @Body('id') id: number, @Body('first_name') first_name: string, @Body('last_name') last_name: string, @Body('themeId') themeId: number, @Body('langId') langId: number) {
-		return await this.userInfos.editUserInfo(id, req.user.id, first_name, last_name, themeId, langId);
+		return await this.userInfos.editUserInfo({id, userId: req.user.id, first_name, last_name, themeId, langId});
 	}
 
 	@Get('/langs')
@@ -83,12 +88,12 @@ export class UserController {
 
 	@Post('/rating-new')
 	public async serUserRating(@Request() req, @Body('reviewId') reviewId: number, @Body('rating') rating: number) {
-		return await this.ratings.createRating(reviewId, req.user.id, rating);
+		return await this.ratings.createRating({reviewId, userId: req.user.id, rating});
 	}
 
 	@Post('/like-new')
 	public async serUserLike(@Request() req, @Body('reviewId') reviewId: number) {
-		return await this.likes.createLike(reviewId, req.user.id, true);
+		return await this.likes.createLike({reviewId, userId: req.user.id, like: true});
 	}
 
 	// comments
@@ -104,7 +109,23 @@ export class UserController {
 
 	@Post('/new-comment')
 	public async newComment(@Request() req, @Body('reviewId') reviewId: number, @Body('comment') comment: string) {
-		//return await this.comments.createComment(reviewId, req.user.id, comment, false, false);
-		throw new Error('add new Comment NOT IMPLEMENTED');
+		return await this.searchComment.createCommentWithIndexing({reviewId, userId: req.user.id, comment, draft: false, blocked: false});
+	}
+
+	@Post('/edit-comment')
+	public async editComment(@Request() req, @Body('id') id: number, @Body('reviewId') reviewId: number, @Body('comment') comment: string) {
+		//return await this.searchComment.createCommentWithIndexing({reviewId, userId: req.user.id, comment, draft: false, blocked: false});
+		return await this.searchComment.updateCommentWithIndexing({id, reviewId, userId: req.user.id, comment, draft: false});
+	}
+
+	@Post('/remove-comment')
+	public async removeComment(@Request() req, @Body('id') id: number) {
+		//return await this.searchComment.createCommentWithIndexing({reviewId, userId: req.user.id, comment, draft: false, blocked: false});
+		return await this.searchComment.removeCommentWithIndexing({id, userId: req.user.id});
+	}
+
+	@Get('/search/:query')
+	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
+		return await this.searchReview.getSearchAll(query, {limit: this.countRows, offset: (page-1)*this.countRows, condPublic: true, blocked: false});
 	}
 }

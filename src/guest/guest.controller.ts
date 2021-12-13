@@ -47,7 +47,7 @@ export class GuestController {
 											@Query('groups') groups: number[], @Query('authors') authors: number[],
 											@Query('sortField') sortField: string, @Query('sortType') sortType: "ASC"|"DESC") {
 		return await this.reviews.getReviewAll({
-			condPublic: true, limit: this.countRows, offset: (page-1)*this.countRows,
+			condPublic: true, condBlocked: false, limit: this.countRows, offset: (page-1)*this.countRows,
 			withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
 			sortField: sortField, sortType: sortType
 		});
@@ -55,7 +55,12 @@ export class GuestController {
 
 	@Get('/review/:id')
 	public async getFullReview(@Param('id') id: number) {
-		return await this.reviews.getReviewOne({reviewId: id, condPublic: true});
+		return await this.reviews.getReviewOne({reviewId: id, condPublic: true, condBlocked: false});
+	}
+
+	@Get('/other-short-reviews/:groupTitleId')
+	public async getShortOtherReviews(@Param('groupTitleId') groupTitleId: number) {
+		return await this.reviews.getShortOtherReviewAll(groupTitleId);
 	}
 
 	@Get(['/tags', '/tags/order-:order'])
@@ -87,7 +92,7 @@ export class GuestController {
 
 	@Get('/search/:query')
 	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
-		return await this.searchReview.getSearchAll(query, {limit: this.countRows, offset: (page-1)*this.countRows, condPublic: true});
+		return await this.searchReview.getSearchAll(query, {limit: this.countRows, offset: (page-1)*this.countRows, condPublic: true, blocked: false});
 	}
 
 	/*

@@ -34,7 +34,7 @@ let SearchCommentService = class SearchCommentService {
             return await this.sequelize.transaction({}, async (t) => {
                 let comment = await this.commentsService.createComment(Object.assign(Object.assign({}, opts), { transaction: t }));
                 comment = comment.toJSON();
-                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: opts.reviewId }, transaction: t });
+                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: opts.reviewId }, paranoid: false, transaction: t });
                 if (!review || !review.searchId)
                     throw new common_1.ConflictException(`Review "${review === null || review === void 0 ? void 0 : review.id}" could not be updated in the index because searchID does not exist`);
                 const res = await this.reviewElasticSearch.addReviewCommentWithId(review.searchId, comment.id, comment.comment);
@@ -51,10 +51,16 @@ let SearchCommentService = class SearchCommentService {
             return await this.sequelize.transaction({}, async (t) => {
                 let comment = await this.commentsService.editComment(Object.assign(Object.assign({}, opts), { transaction: t }));
                 comment = comment.toJSON();
-                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: opts.reviewId }, transaction: t });
+                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: opts.reviewId }, paranoid: false, transaction: t });
                 if (!review || !review.searchId)
                     throw new common_1.ConflictException(`Review "${review === null || review === void 0 ? void 0 : review.id}" could not be updated in the index because searchID does not exist`);
-                const res = await this.reviewElasticSearch.updateReviewCommentWithId(review.searchId, comment.id, comment.comment);
+                let res;
+                if (!!comment.blocked || !!comment.draft || !!comment.deletedAt) {
+                    res = await this.reviewElasticSearch.deleteReviewCommentWithId(review.searchId, opts.id);
+                }
+                else {
+                    res = await this.reviewElasticSearch.updateReviewCommentWithId(review.searchId, comment.id, comment.comment);
+                }
                 console.log(res);
                 return comment;
             });
@@ -63,23 +69,66 @@ let SearchCommentService = class SearchCommentService {
             (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async deleteCommentWithIndexing(commentId) {
+    async deleteCommentWithIndexing(opts) {
         try {
             return await this.sequelize.transaction({}, async (t) => {
-                let comment = await this.comments.findOne({ attributes: ['id', 'reviewId'], where: { id: commentId }, transaction: t });
+                let comment = await this.comments.findOne({ attributes: ['id', 'reviewId'], where: { id: opts.id }, transaction: t });
                 if (!comment)
-                    throw new common_1.ConflictException(`Comment "${commentId}" IS NOT DEFINED`);
-                let data = await this.commentsService.deleteComment(commentId, t);
-                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: comment.reviewId }, transaction: t });
+                    throw new common_1.ConflictException(`Comment "${opts.id}" IS NOT DEFINED`);
+                let data = await this.commentsService.deleteComment(Object.assign(Object.assign({}, opts), { transaction: t }));
+                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: comment.reviewId }, paranoid: false, transaction: t });
                 if (!review || !review.searchId)
                     throw new common_1.ConflictException(`Review "${review === null || review === void 0 ? void 0 : review.id}" could not be updated in the index because searchID does not exist`);
-                const res = await this.reviewElasticSearch.deleteReviewCommentWithId(review.searchId, commentId);
+                const res = await this.reviewElasticSearch.deleteReviewCommentWithId(review.searchId, opts.id);
                 console.log(res);
                 return data;
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id: commentId });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
+        }
+    }
+    async removeCommentWithIndexing(opts) {
+        try {
+            return await this.sequelize.transaction({}, async (t) => {
+                let comment = await this.comments.findOne({ attributes: ['id', 'reviewId'], where: { id: opts.id }, paranoid: false, transaction: t });
+                if (!comment)
+                    throw new common_1.ConflictException(`Comment "${opts.id}" IS NOT DEFINED`);
+                let data = await this.commentsService.removeComment(Object.assign(Object.assign({}, opts), { transaction: t }));
+                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: comment.reviewId }, paranoid: false, transaction: t });
+                if (!review || !review.searchId)
+                    throw new common_1.ConflictException(`Review "${review === null || review === void 0 ? void 0 : review.id}" could not be updated in the index because searchID does not exist`);
+                const res = await this.reviewElasticSearch.deleteReviewCommentWithId(review.searchId, opts.id);
+                console.log(res);
+                return data;
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
+        }
+    }
+    async restoreCommentWithIndexing(opts) {
+        try {
+            return await this.sequelize.transaction({}, async (t) => {
+                let comment = await this.comments.findOne({ attributes: ['id', 'reviewId', 'comment', 'blocked', 'draft'], paranoid: false, where: { id: opts.id }, transaction: t });
+                if (!comment)
+                    throw new common_1.ConflictException(`Comment "${opts.id}" IS NOT DEFINED`);
+                let data = await this.commentsService.restoreComment(Object.assign(Object.assign({}, opts), { transaction: t }));
+                let review = await this.reviews.findOne({ attributes: ['id', 'searchId'], where: { id: comment.reviewId }, paranoid: false, transaction: t });
+                if (!review || !review.searchId)
+                    throw new common_1.ConflictException(`Review "${review === null || review === void 0 ? void 0 : review.id}" could not be updated in the index because searchID does not exist`);
+                if (!comment.blocked && !comment.draft) {
+                    const res = await this.reviewElasticSearch.updateReviewCommentWithId(review.searchId, comment.id, comment.comment);
+                    console.log(res);
+                }
+                else {
+                    console.log('COMMENT CANNOT BEEN UPDATED(COMMENT IS BLOCKED OR DRAFTED)');
+                }
+                return data;
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
 };

@@ -47,7 +47,19 @@ export interface CreateReview {
 
 export interface UpdateReview extends CreateReview {
 	id: number;
+	superEdit?: boolean;
 }
+
+export interface DeleteReview {
+	id: number;
+	transaction?: Transaction;
+	userId?: number;
+	superEdit?: boolean;
+}
+
+export interface RemoveReview extends DeleteReview {}
+
+export interface RestoreReview extends DeleteReview {}
 
 @Injectable()
 export class ReviewsService {
@@ -127,15 +139,21 @@ export class ReviewsService {
 
 				if(!res0) throw new ConflictException({titleId, groupId, reason: `group/title "${groupId}/${titleId}" NOT FOUND`});
 
+				if(!opts.superEdit) {
+					let res = await this.reviews.findOne({attributes: ['id'], where: {userId: opts.userId, id: opts.id}, transaction: t, paranoid: false});
+					if(!res) throw new ConflictException(`EDIT: User "${opts.userId}" cannot edit content that is not the creator`);
+				}
+
 				await this.reviews.update({
 					description: opts.description,
 					blocked: !!opts.blocked,
 					text: opts.text,
 					authorRating: opts.authorRating,
-					userId: opts.userId,
 					titleGroupId: res0.getDataValue('id'),
-					draft: !!opts.draft
-				}, {where: {id}, transaction: t});
+					draft: !!opts.draft,
+					//userId: opts.userId,
+					...(opts.superEdit?{userId: opts.userId}:{})
+				}, {where: {id, ...(opts.superEdit?{}:{userId: opts.userId})}, transaction: t});
 
 				//await this._createReviewOther(t, tags, id);
 				await this._updateReviewTag(t, id, opts.tags);
@@ -158,33 +176,58 @@ export class ReviewsService {
 		await this.reviewTags.bulkCreate(newData, {transaction: t});
 	}
 
-	public async removeReview(id: number) {
+	public async removeReview(opts: RemoveReview) {
 		try {
-			await this.reviews.destroy({where: {id}});
-			return {id: id, deletedAt: (new Date()).toString()}
-		} catch(e) {
-			handlerError(e, {id});
-		}
-	}
-
-	public async restoreReview(id: number) {
-		try {
-			await this.reviews.restore({where: {id}});
-			return {id: id, deletedAt: null}
-		} catch(e) {
-			handlerError(e, {id});
-		}
-	}
-
-	public async deleteReview(id: number, transaction?: Transaction) {
-		try {
+			const transaction = opts.transaction;
 			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
-				await this.reviewTags.destroy({where: {reviewId: id}, transaction: t, force: true});
-				await this.reviews.destroy({where: {id}, transaction: t, force: true});
-				return {id: id};
+				if(opts.superEdit) {
+					await this.reviews.destroy({where: {id: opts.id}, transaction: t});
+				} else {
+					let res = await this.reviews.findOne({attributes: ['id'], where: {userId: opts.userId, id: opts.id}, transaction: t, paranoid: false});
+					if(!res) throw new ConflictException(`REMOVE: User "${opts.userId}" cannot edit content that is not the creator`);
+					await this.reviews.destroy({where: {id: opts.id, userId: opts.userId}, transaction: t});
+				}
+				return {id: opts.id, deletedAt: (new Date()).toString()}
 			});
 		} catch(e) {
-			handlerError(e, {id});
+			handlerError(e, {id: opts.id});
+		}
+	}
+
+	public async restoreReview(opts: RestoreReview) {
+		try {
+			const transaction = opts.transaction;
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				if(opts.superEdit) {
+					await this.reviews.restore({where: {id: opts.id}, transaction: t});
+				} else {
+					let res = await this.reviews.findOne({attributes: ['id'], where: {userId: opts.userId, id: opts.id}, transaction: t, paranoid: false});
+					if(!res) throw new ConflictException(`RESTORE: User "${opts.userId}" cannot edit content that is not the creator`);
+					await this.reviews.restore({where: {id: opts.id, userId: opts.userId}, transaction: t});
+				}
+				return {id: opts.id, deletedAt: null}
+			});
+		} catch(e) {
+			handlerError(e, {id: opts.id});
+		}
+	}
+
+	public async deleteReview(opts: DeleteReview) {
+		try {
+			const transaction = opts.transaction;
+			return await this.sequelize.transaction({...(transaction?{transaction}:{})}, async (t) => {
+				await this.reviewTags.destroy({where: {reviewId: opts.id}, transaction: t, force: true});
+				if(opts.superEdit) {
+					await this.reviews.destroy({where: {id: opts.id}, transaction: t, force: true});
+				} else {
+					let res = await this.reviews.findOne({attributes: ['id'], where: {userId: opts.userId, id: opts.id}, transaction: t, paranoid: false});
+					if(!res) throw new ConflictException(`DESTROY: User "${opts.userId}" cannot edit content that is not the creator`);
+					await this.reviews.destroy({where: {id: opts.id, userId: opts.userId}, transaction: t, force: true});
+				}
+				return {id: opts.id};
+			});
+		} catch(e) {
+			handlerError(e, {id: opts.id});
 		}
 	}
 
@@ -202,7 +245,19 @@ export class ReviewsService {
 		return await this.reviews.findAll({include: [{model: TitleGroups, include: [
 				{model: Title, attributes: ['id', 'title']},
 				{model: Group, attributes: ['id', 'group']}
-			]}], attributes: ['id'], where: {draft: false}});
+			]}], attributes: ['id'], where: {draft: false, blocked: false}});
+	}
+
+	public async getShortOtherReviewAll(groupTitleId: number) {
+		return await this.reviews.findAll({include: [
+			{model: TitleGroups, include: [
+				{model: Title, attributes: ['id', 'title']},
+				{model: Group, attributes: ['id', 'group']}
+			]},
+			{model: User, required: false, attributes: ['id', 'user', 'social_id'], include: [
+				{model: UserInfo, required: false, attributes: ['first_name', 'last_name']}
+			]}
+		], attributes: ['id'], where: {titleGroupId: groupTitleId, draft: false, blocked: false}});
 	}
 	/*
 	protected buildQuery(opts: queryOptions): any {
@@ -311,6 +366,7 @@ export class ReviewsService {
 
 		if(opts.condUserId) query.where = {...query.where, userId: opts.condUserId};
 		if(opts.condPublic !== undefined) query.where = {...query.where, draft: !opts.condPublic};
+		if(opts.condBlocked !== undefined) query.where = {...query.where, blocked: !!opts.condBlocked};
 
 		if(opts.getByIds) query.where = {...query.where, id: opts.getByIds};
 
@@ -318,6 +374,7 @@ export class ReviewsService {
 		if(opts.withTitles) includeTitleGroups.where = {...includeTitleGroups.where, titleId: opts.withTitles};
 		if(opts.withGroups) includeTitleGroups.where = {...includeTitleGroups.where, groupId: opts.withGroups};
 		if(opts.withAuthors) {
+			includeUsers.required = true;
 			includeUsers.where = {id: opts.withAuthors};
 			includeUsers.include.push({model: Role, through: { where: { selected: true } }, where: {role: getRoleEditorUser()}, paranoid});
 		}
@@ -360,11 +417,11 @@ export class ReviewsService {
 		], where: {id: opts.reviewId}, subQuery:false, paranoid, transaction};
 
 		if(opts.withCommentAll) {
-			const model: any = {model: Comment, required: false, paranoid, attributes: ['id', 'comment'], where: {
+			const model: any = {model: Comment, required: false, paranoid: !opts.condCommentsWithDeleted, attributes: ['id', 'comment'], where: {
 				reviewId: [Sequelize.col(`"${reviewModelName}"."id"`)]
 			}};
-			if(opts.condPublic !== undefined) model.where = {...model.where, draft: !opts.condPublic};
-			//if(opts.condBlocked !== undefined) model.where = {...model.where, blocked: opts.condBlocked};
+			if(opts.condCommentsPublic !== undefined) model.where = {...model.where, draft: !opts.condCommentsPublic};
+			if(opts.condCommentsBlocked !== undefined) model.where = {...model.where, blocked: !!opts.condCommentsBlocked};
 			query.include.push(model);
 		}
 
@@ -423,4 +480,7 @@ interface OptionsQueryOne {
 	forUserId?: number;
 	withCommentAll?: boolean;
 	condBlocked?: boolean;
+	condCommentsPublic?: boolean;
+	condCommentsBlocked?: boolean;
+	condCommentsWithDeleted?: boolean;
 }

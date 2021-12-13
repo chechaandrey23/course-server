@@ -27,10 +27,12 @@ const tags_service_1 = require("../entries/tags/tags.service");
 const ratings_service_1 = require("../entries/ratings/ratings.service");
 const likes_service_1 = require("../entries/likes/likes.service");
 const comments_service_1 = require("../entries/comments/comments.service");
+const search_review_service_1 = require("../entries/reviews/search.review.service");
+const search_comment_service_1 = require("../entries/comments/search.comment.service");
 const jwt_access_auth_guard_1 = require("../auth/guards/jwt.access.auth.guard");
 const user_role_guard_1 = require("../auth/guards/user.role.guard");
 let UserController = class UserController {
-    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments) {
+    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, searchReview, searchComment) {
         this.users = users;
         this.roles = roles;
         this.langs = langs;
@@ -44,24 +46,26 @@ let UserController = class UserController {
         this.ratings = ratings;
         this.likes = likes;
         this.comments = comments;
+        this.searchReview = searchReview;
+        this.searchComment = searchComment;
         this.countRows = 10;
     }
     async getDescriptionOrderReviews(req, page = 1, tags, titles, groups, authors, sortField, sortType) {
         return await this.reviews.getReviewAll({
-            condPublic: true, limit: this.countRows, offset: (page - 1) * this.countRows,
+            condPublic: true, condBlocked: false, limit: this.countRows, offset: (page - 1) * this.countRows,
             withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
             sortField: sortField, sortType: sortType,
             forUserId: req.user.id
         });
     }
     async getFullReview(req, id) {
-        return await this.reviews.getReviewOne({ reviewId: id, forUserId: req.user.id, condPublic: true });
+        return await this.reviews.getReviewOne({ reviewId: id, forUserId: req.user.id, condPublic: true, condBlocked: false });
     }
     async getUserObject(req) {
         return await this.users.getUserOne(req.user.id);
     }
     async setUserSettings(req, id, first_name, last_name, themeId, langId) {
-        return await this.userInfos.editUserInfo(id, req.user.id, first_name, last_name, themeId, langId);
+        return await this.userInfos.editUserInfo({ id, userId: req.user.id, first_name, last_name, themeId, langId });
     }
     async getUserLangAll() {
         return await this.langs.getShortLangAll();
@@ -70,10 +74,10 @@ let UserController = class UserController {
         return await this.themes.getShortThemeAll();
     }
     async serUserRating(req, reviewId, rating) {
-        return await this.ratings.createRating(reviewId, req.user.id, rating);
+        return await this.ratings.createRating({ reviewId, userId: req.user.id, rating });
     }
     async serUserLike(req, reviewId) {
-        return await this.likes.createLike(reviewId, req.user.id, true);
+        return await this.likes.createLike({ reviewId, userId: req.user.id, like: true });
     }
     async getComments(req, page = 1, reviewId) {
         return await this.comments.getCommentReviewAll(this.countRows, (page - 1) * this.countRows, reviewId, true, false);
@@ -82,11 +86,20 @@ let UserController = class UserController {
         return await this.comments.getAutoUpdateCommentAll(time, reviewId, true, false);
     }
     async newComment(req, reviewId, comment) {
-        throw new Error('add new Comment NOT IMPLEMENTED');
+        return await this.searchComment.createCommentWithIndexing({ reviewId, userId: req.user.id, comment, draft: false, blocked: false });
+    }
+    async editComment(req, id, reviewId, comment) {
+        return await this.searchComment.updateCommentWithIndexing({ id, reviewId, userId: req.user.id, comment, draft: false });
+    }
+    async removeComment(req, id) {
+        return await this.searchComment.removeCommentWithIndexing({ id, userId: req.user.id });
+    }
+    async getReviewSearchAll(query, page = 1) {
+        return await this.searchReview.getSearchAll(query, { limit: this.countRows, offset: (page - 1) * this.countRows, condPublic: true, blocked: false });
     }
 };
 __decorate([
-    (0, common_1.Get)(['/reviews']),
+    (0, common_1.Get)('/reviews'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Query)('page')),
     __param(2, (0, common_1.Query)('tags')),
@@ -182,6 +195,32 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number, String]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "newComment", null);
+__decorate([
+    (0, common_1.Post)('/edit-comment'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)('id')),
+    __param(2, (0, common_1.Body)('reviewId')),
+    __param(3, (0, common_1.Body)('comment')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number, Number, String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "editComment", null);
+__decorate([
+    (0, common_1.Post)('/remove-comment'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "removeComment", null);
+__decorate([
+    (0, common_1.Get)('/search/:query'),
+    __param(0, (0, common_1.Param)('query')),
+    __param(1, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getReviewSearchAll", null);
 UserController = __decorate([
     (0, common_1.UseGuards)(user_role_guard_1.UserRoleGuard),
     (0, common_1.UseGuards)(jwt_access_auth_guard_1.JWTAccessAuthGuard),
@@ -198,7 +237,9 @@ UserController = __decorate([
         tags_service_1.TagsService,
         ratings_service_1.RatingsService,
         likes_service_1.LikesService,
-        comments_service_1.CommentsService])
+        comments_service_1.CommentsService,
+        search_review_service_1.SearchReviewService,
+        search_comment_service_1.SearchCommentService])
 ], UserController);
 exports.UserController = UserController;
 //# sourceMappingURL=user.controller.js.map

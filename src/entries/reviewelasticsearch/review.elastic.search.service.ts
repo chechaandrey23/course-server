@@ -27,6 +27,7 @@ export interface ReviewSearch {
 	comments?: Array<{id: number; comment: string}>;
 	blocked: boolean;
 	draft: boolean;
+	deletedAt: any;
 }
 
 export interface ReviewCommentBody {
@@ -36,7 +37,9 @@ export interface ReviewCommentBody {
 
 export interface ReviewSearchBody {
 	id: number;
-	skip: boolean;
+	blocked: boolean;
+	draft: boolean;
+	removed: boolean;
 	description: string;
 	text: string;
 	group: string;
@@ -72,7 +75,9 @@ export class ReviewElasticSearchService {
 			index: this.index,
 			body: {
 				id: review.id,
-				skip: !!(review.blocked || review.draft),
+				blocked: !!review.blocked,
+				draft: !!review.draft,
+				removed: !!review.deletedAt,
 				description: review.description || '',
 				text: review.text || '',
 				group: review.groupTitle?.group?.group || '',
@@ -105,7 +110,7 @@ export class ReviewElasticSearchService {
 					query_string: {
 						//query: `*${text}*`,
 						//escape: true,
-						query: `(*${text}*) AND skip:false`,
+						query: `(*${text}*) AND blocked:false AND draft:false AND removed:false`,
 						fields: [
 							'description', 'text', 'group', 'title', 'titleDescription', 'authorFullName', 'tags', 'comments.comment'
 						]
@@ -124,10 +129,6 @@ export class ReviewElasticSearchService {
 			return acc;
 		}, {ids: [], searchIds: []})
 	}
-
-	public async hideReviewIndex(id: string) {}
-
-	public async showReviewIndex(id: string) {}
 
 	public async getReviewIndex(id: number) {
 		return await this.elasticsearchService.search<ReviewSearchResult>({index: this.index, size: 1, body: {
@@ -163,7 +164,9 @@ export class ReviewElasticSearchService {
 	protected getScriptUpdate(review: ReviewSearch) {
 		const newBody: ReviewSearchBody = {
 			id: review.id,
-			skip: !!(review.blocked || review.draft),
+			blocked: !!review.blocked,
+			draft: !!review.draft,
+			removed: !!review.deletedAt,
 			description: review.description || '',
 			text: review.text || '',
 			group: review.groupTitle?.group?.group || '',
@@ -201,6 +204,54 @@ export class ReviewElasticSearchService {
 		return await this.elasticsearchService.update({id, index: this.index, body: {
 			script: {
 				inline: this.getScriptUpdate(review)
+			}
+		}});
+	}
+
+	public async removeReview(id: number) {
+		return await this.elasticsearchService.updateByQuery({
+			index: this.index,
+			body: {
+				query: {
+					match: {
+						id: id,
+					}
+				},
+				script: {
+					inline: `ctx._source.removed='true';`
+				}
+			}
+		});
+	}
+
+	public async removeReviewWithId(id: string) {
+		return await this.elasticsearchService.update({id, index: this.index, body: {
+			script: {
+				inline: `ctx._source.removed='true';`
+			}
+		}});
+	}
+
+	public async restoreReview(id: number) {
+		return await this.elasticsearchService.updateByQuery({
+			index: this.index,
+			body: {
+				query: {
+					match: {
+						id: id,
+					}
+				},
+				script: {
+					inline: `ctx._source.removed='false';`
+				}
+			}
+		});
+	}
+
+	public async restoreReviewWithId(id: string) {
+		return await this.elasticsearchService.update({id, index: this.index, body: {
+			script: {
+				inline: `ctx._source.removed='false';`
 			}
 		}});
 	}
@@ -248,6 +299,17 @@ export class ReviewElasticSearchService {
 		});
 	}
 
+	protected scriptUpdate: string = `
+		boolean updated = false;
+		for(def entry : ctx._source.comments) {
+			if(entry.id == params.comment.id) {
+				updated = true;
+				entry.comment = params.comment.comment;
+			}
+		}
+		if(!updated) ctx._source.comments.add(params.comment);
+	`;
+
 	public async updateReviewComment(reviewId: number, commentId: number, comment: string) {
 		return await this.elasticsearchService.updateByQuery({
 			index: this.index,
@@ -258,11 +320,13 @@ export class ReviewElasticSearchService {
 					}
 				},
 				script: {
-					source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+					source: this.scriptUpdate,
 					lang: "painless",
 					params: {
-						commentId: commentId,
-						comment: comment
+						comment: {
+							id: commentId,
+							comment: comment
+						}
 					}
 				}
 			}
@@ -322,11 +386,13 @@ export class ReviewElasticSearchService {
 					}
 				},
 				script: {
-					source: `for (def entry : ctx._source.comments) {if(entry.id == params.commentId) entry.comment = params.comment;}`,
+					source: this.scriptUpdate,
 					lang: "painless",
 					params: {
-						commentId: commentId,
-						comment: comment
+						comment: {
+							id: commentId,
+							comment: comment
+						}
 					}
 				}
 			}

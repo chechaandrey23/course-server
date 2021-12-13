@@ -4,11 +4,17 @@ import {Sequelize} from 'sequelize-typescript';
 
 import {handlerError} from '../../helpers/handler.error';
 
-import {ReviewsService, UpdateReview, CreateReview} from './reviews.service';
+import {ReviewsService, UpdateReview, CreateReview, DeleteReview, RemoveReview, RestoreReview} from './reviews.service';
 
 import {ReviewElasticSearchService, ReviewSearch} from '../reviewelasticsearch/review.elastic.search.service';
 
 import {Review} from './review.model';
+
+export interface SearchDeleteReview extends DeleteReview {}
+export interface SearchRemoveReview extends RemoveReview {}
+export interface SearchRestoreReview extends RestoreReview {}
+export interface SearchCreateReview extends CreateReview {}
+export interface SearchUpdateReview extends UpdateReview {}
 
 @Injectable()
 export class SearchReviewService {
@@ -28,9 +34,11 @@ export class SearchReviewService {
 		 return await this.reviewsService.getReviewAll({...opts, ...{getByIds: data.ids}});
 	}
 
-	public async getDualReviewIndex(reviewId: number, searchId: string) {
+	public async getDualReviewIndex(reviewId: number, searchId: string, withDeleted: boolean = false) {
 		return {
-			review: await this.reviewsService.getReviewOne({reviewId, withCommentAll: true}),
+			review: await this.reviewsService.getReviewOne({
+				reviewId, withCommentAll: true, withDeleted, condCommentsPublic: true, condCommentsBlocked: false, condCommentsWithDeleted: false
+			}),
 			index: searchId?await this.reviewElasticSearch.getReviewIndexWithIndex(searchId):null
 		}
 	}
@@ -52,7 +60,6 @@ export class SearchReviewService {
 	public async deleteIndex(reviewId: number, searchId: string) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
-				//let data: any = await this.reviewElasticSearch.deleteReviewWithId(searchId);
 				let data: any = await this.reviewElasticSearch.deleteReview(reviewId);
 				console.log(data);
 				await this.reviews.update({searchId: null}, {where: {id: reviewId}, transaction: t});
@@ -63,7 +70,7 @@ export class SearchReviewService {
 		}
 	}
 
-	public async createReviewWithIndexing(opts: CreateReview) {
+	public async createReviewWithIndexing(opts: SearchCreateReview) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
 				let review: any = await this.reviewsService.createReview({...opts, ...{transaction: t}});
@@ -78,7 +85,7 @@ export class SearchReviewService {
 		}
 	}
 
-	public async updateReviewWithIndexing(opts: UpdateReview) {
+	public async updateReviewWithIndexing(opts: SearchUpdateReview) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
 				let review: any = await this.reviewsService.editReview({...opts, ...{transaction: t}});
@@ -93,16 +100,43 @@ export class SearchReviewService {
 		}
 	}
 
-	public async deleteReviewWithDeleteIndex(reviewId: number) {
+	public async deleteReviewWithDeleteIndex(opts: SearchDeleteReview) {
 		try {
 			return await this.sequelize.transaction({}, async (t) => {
-				let data = await this.reviewsService.deleteReview(reviewId, t);
-				let res = await this.reviewElasticSearch.deleteReview(reviewId);
+				let data = await this.reviewsService.deleteReview({...opts, ...{transaction: t}});
+				let res = await this.reviewElasticSearch.deleteReview(opts.id);
 				console.log(res);
-				return {id: data.id};
+				return data;
 			});
 		} catch(e) {
-			handlerError(e, {id: reviewId});
+			handlerError(e, {id: opts.id});
 		}
 	}
+
+	public async removeReviewWithDeleteIndex(opts: SearchRemoveReview) {
+		try {
+			return await this.sequelize.transaction({}, async (t) => {
+				let data = await this.reviewsService.removeReview({...opts, ...{transaction: t}});
+				let res = await this.reviewElasticSearch.removeReview(opts.id);
+				console.log(res);
+				return data;
+			});
+		} catch(e) {
+			handlerError(e, {id: opts.id});
+		}
+	}
+
+	public async restoreReviewWithDeleteIndex(opts: SearchRestoreReview) {
+		try {
+			return await this.sequelize.transaction({}, async (t) => {
+				let data = await this.reviewsService.restoreReview({...opts, ...{transaction: t}});
+				let res = await this.reviewElasticSearch.restoreReview(opts.id);
+				console.log(res);
+				return data;
+			});
+		} catch(e) {
+			handlerError(e, {id: opts.id});
+		}
+	}
+
 }

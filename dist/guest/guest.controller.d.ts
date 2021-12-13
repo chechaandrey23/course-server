@@ -32,6 +32,7 @@ export declare class GuestController {
     protected readonly countTags: number;
     getDescriptionOrderReviews(page: number, tags: number[], titles: number[], groups: number[], authors: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
     getFullReview(id: number): Promise<import("../entries/reviews/review.model").Review>;
+    getShortOtherReviews(groupTitleId: number): Promise<import("../entries/reviews/review.model").Review[]>;
     getTagOrderReviews(page?: number, order?: boolean): Promise<import("../entries/tags/tag.model").Tag[]>;
     protected countEditorRows: number;
     getShortEditorUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;

@@ -74,11 +74,11 @@ let EditorController = class EditorController {
     async newTag(tag) {
         return await this.tags.createTag(tag);
     }
-    async getImageAll(page = 1) {
-        return await this.images.getImageAll(this.countImageRows, (page - 1) * this.countImageRows, false);
+    async getImageAll(req, page = 1) {
+        return await this.images.getImageAll({ limit: this.countRows, offset: (page - 1) * this.countRows, condUserId: req.user.id });
     }
     async newImage(req, images) {
-        return await this.images.createImage(req.user.id, images);
+        return await this.images.createImage({ userId: req.user.id, images });
     }
 };
 __decorate([
@@ -154,9 +154,10 @@ __decorate([
 ], EditorController.prototype, "newTag", null);
 __decorate([
     (0, common_1.Get)('/images'),
-    __param(0, (0, common_1.Query)('page')),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)('page')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Object, Number]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "getImageAll", null);
 __decorate([

@@ -31,6 +31,17 @@ export interface CreateReview {
 }
 export interface UpdateReview extends CreateReview {
     id: number;
+    superEdit?: boolean;
+}
+export interface DeleteReview {
+    id: number;
+    transaction?: Transaction;
+    userId?: number;
+    superEdit?: boolean;
+}
+export interface RemoveReview extends DeleteReview {
+}
+export interface RestoreReview extends DeleteReview {
 }
 export declare class ReviewsService {
     private sequelize;
@@ -44,20 +55,21 @@ export declare class ReviewsService {
     protected _updateReviewTag(t: Transaction, reviewId: number, tags: number[]): Promise<void>;
     editReview(opts: UpdateReview): Promise<Review>;
     _createReviewOther(t: Transaction, tags: number[], reviewId: number): Promise<void>;
-    removeReview(id: number): Promise<{
+    removeReview(opts: RemoveReview): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreReview(id: number): Promise<{
+    restoreReview(opts: RestoreReview): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteReview(id: number, transaction?: Transaction): Promise<{
+    deleteReview(opts: DeleteReview): Promise<{
         id: number;
     }>;
     getReviewAll(opts: OptionsQueryAll): Promise<Review[]>;
     getReviewOne(opts: OptionsQueryOne): Promise<Review>;
     getShortReviewAll(): Promise<Review[]>;
+    getShortOtherReviewAll(groupTitleId: number): Promise<Review[]>;
     protected buildQueryAll(opts: OptionsQueryAll): any;
     protected buildQueryOne(opts: OptionsQueryOne): any;
     getReviewTagAll(count: number, offset?: number): Promise<ReviewTags[]>;
@@ -88,5 +100,8 @@ interface OptionsQueryOne {
     forUserId?: number;
     withCommentAll?: boolean;
     condBlocked?: boolean;
+    condCommentsPublic?: boolean;
+    condCommentsBlocked?: boolean;
+    condCommentsWithDeleted?: boolean;
 }
 export {};

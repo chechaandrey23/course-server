@@ -33,18 +33,19 @@ let ImagesService = class ImagesService {
         });
         this.storageGoogleBucket = this.storageGoogleCloud.bucket('course-share-file');
     }
-    async createImage(userId, images) {
+    async createImage(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                let res0 = await this.users.findOne({ where: { id: userId }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                let res0 = await this.users.findOne({ where: { id: opts.userId }, transaction: t });
                 if (!res0)
-                    throw new common_1.ConflictException({ userId, reason: `User (userId: ${userId}) does not exist` });
+                    throw new common_1.ConflictException({ userId: opts.userId, reason: `User (userId: ${opts.userId}) does not exist` });
                 let newData = [];
-                for (const image of images) {
+                for (const image of opts.images) {
                     const extNameArr = image.originalname.split('.');
                     const fileName = `${(0, uuid_1.v4)()}.${extNameArr[extNameArr.length - 1]}`;
                     const linkFilename = await this.upLoad(fileName, image.buffer);
-                    newData.push({ userId, url: linkFilename, filename: fileName, vendor: 'google.bucket' });
+                    newData.push({ userId: opts.userId, url: linkFilename, filename: fileName, vendor: 'google.bucket' });
                 }
                 let res1 = await this.images.bulkCreate(newData, { transaction: t });
                 let ids = res1.map((entry) => { return entry.getDataValue('id'); });
@@ -55,15 +56,18 @@ let ImagesService = class ImagesService {
             (0, handler_error_1.handlerError)(e);
         }
     }
-    async editImage(id, userId) {
+    async editImage(opts) {
         try {
-            return await this.sequelize.transaction({}, async (t) => {
-                await this.images.update({ userId }, { where: { id }, transaction: t });
-                return await this.images.findAll({ include: [{ model: user_model_1.User, attributes: ['id', 'user', 'social_id'] }], where: { id: id }, transaction: t });
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (!opts.superEdit)
+                    throw new common_1.NotAcceptableException(`Content can be edited with the passed "superEdit" option`);
+                await this.images.update({ userId: opts.userId }, { where: { id: opts.id }, transaction: t });
+                return await this.images.findAll({ include: [{ model: user_model_1.User, attributes: ['id', 'user', 'social_id'] }], where: { id: opts.id }, transaction: t });
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e);
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
     upLoad(filename, buffer) {
@@ -82,42 +86,80 @@ let ImagesService = class ImagesService {
             blobStream.end(buffer);
         });
     }
-    async removeImage(id) {
+    async removeImage(opts) {
         try {
-            await this.images.destroy({ where: { id } });
-            return { id: id, deletedAt: (new Date()).toString() };
-        }
-        catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
-        }
-    }
-    async restoreImage(id) {
-        try {
-            await this.images.restore({ where: { id } });
-            return { id: id, deletedAt: null };
-        }
-        catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
-        }
-    }
-    async deleteImage(id) {
-        try {
-            return await this.sequelize.transaction({}, async (t) => {
-                let res = await this.images.findOne({ where: { id }, paranoid: false, transaction: t });
-                if (!res)
-                    throw new common_1.ConflictException({ id, reason: `Image record id="${id}" NOT FOUND` });
-                let gres = await this.storageGoogleBucket.file(res.getDataValue('filename')).delete();
-                await this.images.destroy({ where: { id }, transaction: t, force: true });
-                return { id: id };
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.images.destroy({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.images.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`REMOVE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.images.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: (new Date()).toString() };
             });
         }
         catch (e) {
-            (0, handler_error_1.handlerError)(e, { id });
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
         }
     }
-    async getImageAll(count, offset = 0, withDeleted = false) {
-        return await this.images.findAll({ include: [{ model: user_model_1.User, attributes: ['id', 'user', 'social_id'], paranoid: !withDeleted },
-            ], offset: offset, limit: count, paranoid: !withDeleted });
+    async restoreImage(opts) {
+        try {
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                if (opts.superEdit) {
+                    await this.images.restore({ where: { id: opts.id }, transaction: t });
+                }
+                else {
+                    let res = await this.images.findOne({ attributes: ['id'], where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`RESTORE: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.images.restore({ where: { id: opts.id, userId: opts.userId }, transaction: t });
+                }
+                return { id: opts.id, deletedAt: null };
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
+        }
+    }
+    async deleteImage(opts) {
+        try {
+            const transaction = opts.transaction;
+            return await this.sequelize.transaction(Object.assign({}, (transaction ? { transaction } : {})), async (t) => {
+                let res;
+                if (opts.superEdit) {
+                    res = await this.images.findOne({ where: { id: opts.id }, paranoid: false, transaction: t });
+                    if (!res)
+                        throw new common_1.ConflictException({ id: opts.id, reason: `Image record id="${opts.id}" NOT FOUND` });
+                    await this.images.destroy({ where: { id: opts.id }, transaction: t, force: true });
+                }
+                else {
+                    res = await this.images.findOne({ where: { userId: opts.userId, id: opts.id }, transaction: t, paranoid: false });
+                    if (!res)
+                        throw new common_1.ConflictException(`DESTROY: User "${opts.userId}" cannot edit content that is not the creator`);
+                    await this.images.destroy({ where: { id: opts.id, userId: opts.userId }, transaction: t, force: true });
+                }
+                let gres = await this.storageGoogleBucket.file(res.getDataValue('filename')).delete();
+                console.log(gres);
+                return { id: opts.id };
+            });
+        }
+        catch (e) {
+            (0, handler_error_1.handlerError)(e, { id: opts.id });
+        }
+    }
+    async getImageAll(opts) {
+        return await this.images.findAll({
+            include: [{ model: user_model_1.User, attributes: ['id', 'user', 'social_id'], paranoid: !opts.withDeleted }],
+            where: Object.assign({}, (opts.condUserId ? { userId: opts.condUserId } : {})),
+            offset: opts.offset || 0,
+            limit: opts.limit,
+            paranoid: !opts.withDeleted
+        });
     }
 };
 ImagesService = __decorate([

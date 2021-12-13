@@ -65,7 +65,7 @@ let AdminController = class AdminController {
         return await this.searchReview.getReviewForSearchAll({ withDeleted: true, limit: this.countRows, offset: (page - 1) * this.countRows });
     }
     async getReviewIndexElasticSearch(reviewId, searchId) {
-        return await this.searchReview.getDualReviewIndex(reviewId, searchId);
+        return await this.searchReview.getDualReviewIndex(reviewId, searchId, true);
     }
     async indexReviewElasticSearch(reviewId) {
         return await this.searchReview.createIndex(reviewId);
@@ -110,19 +110,19 @@ let AdminController = class AdminController {
         return await this.userInfos.getUserInfoAll(this.countRows, (page - 1) * this.countRows, true);
     }
     async addUserInfo(userId) {
-        return await this.userInfos.createUserInfo(userId);
+        return await this.userInfos.createUserInfo({ userId });
     }
     async editUserInfo(id, userId, first_name, last_name, themeId, langId) {
-        return await this.userInfos.editUserInfo(id, userId, first_name, last_name, themeId, langId);
+        return await this.userInfos.editUserInfo({ id, userId, first_name, last_name, themeId, langId, superEdit: true });
     }
     async removeUserInfo(id) {
-        return await this.userInfos.removeUserInfo(id);
+        return await this.userInfos.removeUserInfo({ id, superEdit: true });
     }
     async restoreUserInfo(id) {
-        return await this.userInfos.restoreUserInfo(id);
+        return await this.userInfos.restoreUserInfo({ id, superEdit: true });
     }
     async deleteUserInfo(id) {
-        return await this.userInfos.deleteUserInfo(id);
+        return await this.userInfos.deleteUserInfo({ id, superEdit: true });
     }
     async getRoles(page = 1) {
         return await this.roles.getRoleAll(this.countRows, (page - 1) * this.countRows, true);
@@ -245,37 +245,37 @@ let AdminController = class AdminController {
         return await this.searchReview.createReviewWithIndexing({ description, text, authorRating, userId, titleId, groupId, draft, tags, blocked });
     }
     async editReview(id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked) {
-        return await this.searchReview.updateReviewWithIndexing({ id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked });
+        return await this.searchReview.updateReviewWithIndexing({ id, description, text, authorRating, userId, titleId, groupId, draft, tags, blocked, superEdit: true });
     }
     async removeReview(id) {
-        return await this.reviews.removeReview(id);
+        return await this.searchReview.removeReviewWithDeleteIndex({ id, superEdit: true });
     }
     async restoreReview(id) {
-        return await this.reviews.restoreReview(id);
+        return await this.searchReview.restoreReviewWithDeleteIndex({ id, superEdit: true });
     }
     async deleteReview(id) {
-        return await this.searchReview.deleteReviewWithDeleteIndex(id);
+        return await this.searchReview.deleteReviewWithDeleteIndex({ id, superEdit: true });
     }
     async getReviewTagAll(page = 1) {
         return await this.reviews.getReviewTagAll(this.countRows, (page - 1) * this.countRows);
     }
     async getImages(page = 1) {
-        return await this.images.getImageAll(this.countRows, (page - 1) * this.countRows, true);
+        return await this.images.getImageAll({ withDeleted: true, limit: this.countRows, offset: (page - 1) * this.countRows });
     }
     async addImage(userId, images) {
-        return await this.images.createImage(userId, images);
+        return await this.images.createImage({ userId, images });
     }
     async editImage(id, userId) {
-        return await this.images.editImage(id, userId);
+        return await this.images.editImage({ id, userId, superEdit: true });
     }
     async removeImage(id) {
-        return await this.images.removeImage(id);
+        return await this.images.removeImage({ id, superEdit: true });
     }
     async restoreImage(id) {
-        return await this.images.restoreImage(id);
+        return await this.images.restoreImage({ id, superEdit: true });
     }
     async deleteImage(id) {
-        return await this.images.deleteImage(id);
+        return await this.images.deleteImage({ id, superEdit: true });
     }
     async getTags(page = 1) {
         return await this.tags.getTagAll({ withDeleted: true, limit: this.countRows, offset: (page - 1) * this.countRows });
@@ -302,37 +302,37 @@ let AdminController = class AdminController {
         return await this.ratings.getRatingAll(this.countRows, (page - 1) * this.countRows, true);
     }
     async addRating(reviewId, userId, rating) {
-        return await this.ratings.createRating(reviewId, userId, rating);
+        return await this.ratings.createRating({ reviewId, userId, rating });
     }
     async editRating(id, reviewId, userId, rating) {
-        return await this.ratings.editRating(id, reviewId, userId, rating);
+        return await this.ratings.editRating({ id, reviewId, userId, rating, superEdit: true });
     }
     async removeRating(id) {
-        return await this.ratings.removeRating(id);
+        return await this.ratings.removeRating({ id, superEdit: true });
     }
     async restoreRating(id) {
-        return await this.ratings.restoreRating(id);
+        return await this.ratings.restoreRating({ id, superEdit: true });
     }
     async deleteRating(id) {
-        return await this.ratings.deleteRating(id);
+        return await this.ratings.deleteRating({ id, superEdit: true });
     }
     async getLikes(page = 1) {
         return await this.likes.getLikeAll(this.countRows, (page - 1) * this.countRows, true);
     }
     async addLike(reviewId, userId, like) {
-        return await this.likes.createLike(reviewId, userId, like);
+        return await this.likes.createLike({ reviewId, userId, like });
     }
     async editLike(id, reviewId, userId, like) {
-        return await this.likes.editLike(id, reviewId, userId, like);
+        return await this.likes.editLike({ id, reviewId, userId, like, superEdit: true });
     }
     async removeLike(id) {
-        return await this.likes.removeLike(id);
+        return await this.likes.removeLike({ id, superEdit: true });
     }
     async restoreLike(id) {
-        return await this.likes.restoreLike(id);
+        return await this.likes.restoreLike({ id, superEdit: true });
     }
     async deleteLike(id) {
-        return await this.likes.deleteLike(id);
+        return await this.likes.deleteLike({ id, superEdit: true });
     }
     async getComments(page = 1) {
         return await this.comments.getCommentAll(this.countRows, (page - 1) * this.countRows, true);
@@ -341,16 +341,16 @@ let AdminController = class AdminController {
         return await this.searchComment.createCommentWithIndexing({ reviewId, userId, comment, draft, blocked });
     }
     async editComment(id, reviewId, userId, comment, draft, blocked) {
-        return await this.searchComment.updateCommentWithIndexing({ id, reviewId, userId, comment, draft, blocked });
+        return await this.searchComment.updateCommentWithIndexing({ id, reviewId, userId, comment, draft, blocked, superEdit: true });
     }
     async removeComment(id) {
-        return await this.comments.removeComment(id);
+        return await this.searchComment.removeCommentWithIndexing({ id, superEdit: true });
     }
     async restoreComment(id) {
-        return await this.comments.restoreComment(id);
+        return await this.searchComment.restoreCommentWithIndexing({ id, superEdit: true });
     }
     async deleteComment(id) {
-        return await this.searchComment.deleteCommentWithIndexing(id);
+        return await this.searchComment.deleteCommentWithIndexing({ id, superEdit: true });
     }
 };
 __decorate([
