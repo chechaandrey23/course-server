@@ -20,7 +20,6 @@ __decorate([
     (0, class_transformer_1.Transform)(({ value }) => { return value * 1; }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(0),
-    (0, class_validator_1.Max)(Math.pow(2, 32) - 1),
     __metadata("design:type", Number)
 ], CommentsAutoUpdateDTO.prototype, "time", void 0);
 exports.CommentsAutoUpdateDTO = CommentsAutoUpdateDTO;

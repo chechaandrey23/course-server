@@ -12,5 +12,5 @@ export class CommentAddWithoutDTO extends ReviewIdDTO {
 
 	@Transform(({value}) => {return !!value})
 	@IsBoolean()
-	draft: boolean;
+	draft: boolean = false;
 }

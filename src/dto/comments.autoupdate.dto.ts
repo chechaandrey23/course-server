@@ -8,6 +8,6 @@ export class CommentsAutoUpdateDTO extends ReviewIdDTO {
 	@Transform(({value}) => {return value*1})
 	@IsInt()
 	@Min(0)
-	@Max(Math.pow(2, 32) - 1)
+	//@Max(Math.pow(2, 32) - 1)
 	time: number;
 }

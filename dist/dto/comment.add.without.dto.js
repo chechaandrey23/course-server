@@ -14,6 +14,10 @@ const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const reviewid_dto_1 = require("./reviewid.dto");
 class CommentAddWithoutDTO extends reviewid_dto_1.ReviewIdDTO {
+    constructor() {
+        super(...arguments);
+        this.draft = false;
+    }
 }
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
