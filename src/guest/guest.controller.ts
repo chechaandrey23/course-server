@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Post, Param, Query, UploadedFile, UploadedFiles, UseInterceptors} from '@nestjs/common';
+import {Body, Controller, Get, Post, Param, Query, UploadedFile, UploadedFiles, UseInterceptors, ValidationPipe, UsePipes} from '@nestjs/common';
 import {FileInterceptor, FilesInterceptor, AnyFilesInterceptor} from '@nestjs/platform-express';
 
 import {Express} from 'express';
@@ -19,6 +19,17 @@ import {CommentsService} from '../entries/comments/comments.service';
 
 import {SearchReviewService} from '../entries/reviews/search.review.service';
 
+// dto
+import {IdDTO} from '../dto/id.dto';
+import {PageDTO} from '../dto/page.dto';
+import {ReviewsFilterExtDTO} from '../dto/reviews.filter.ext.dto';
+import {SearchDTO} from '../dto/search.dto';
+import {TitlesQueryDTO} from '../dto/titles.query.dto';
+import {TagsQueryDTO} from '../dto/tags.query.dto';
+import {GroupTitleIdDTO} from '../dto/grouptitleid.dto';
+import {TagsOrderDTO} from '../dto/tags.order.dto';
+
+@UsePipes(new ValidationPipe({transform: true}))
 @Controller('/guest')
 export class GuestController {
 	constructor(
@@ -42,37 +53,35 @@ export class GuestController {
 	protected readonly countTags: number = 25;
 
 	@Get('/reviews')
-	public async getDescriptionOrderReviews(@Query('page') page: number = 1,
-											@Query('tags') tags: number[], @Query('titles') titles: number[],
-											@Query('groups') groups: number[], @Query('authors') authors: number[],
-											@Query('sortField') sortField: string, @Query('sortType') sortType: "ASC"|"DESC") {
+	public async getDescriptionOrderReviews(@Query() reviewsFilterExtDTO: ReviewsFilterExtDTO) {
 		return await this.reviews.getReviewAll({
-			condPublic: true, condBlocked: false, limit: this.countRows, offset: (page-1)*this.countRows,
-			withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
-			sortField: sortField, sortType: sortType
+			condPublic: true, condBlocked: false, limit: this.countRows, offset: (reviewsFilterExtDTO.page-1)*this.countRows,
+			withTags: reviewsFilterExtDTO.tags, withTitles: reviewsFilterExtDTO.titles,
+			withGroups: reviewsFilterExtDTO.groups, withAuthors: reviewsFilterExtDTO.authors,
+			sortField: reviewsFilterExtDTO.sortField, sortType: reviewsFilterExtDTO.sortType
 		});
 	}
 
 	@Get('/review/:id')
-	public async getFullReview(@Param('id') id: number) {
-		return await this.reviews.getReviewOne({reviewId: id, condPublic: true, condBlocked: false});
+	public async getFullReview(@Param() idDTO: IdDTO) {
+		return await this.reviews.getReviewOne({reviewId: idDTO.id, condPublic: true, condBlocked: false});
 	}
 
 	@Get('/other-short-reviews/:groupTitleId')
-	public async getShortOtherReviews(@Param('groupTitleId') groupTitleId: number) {
-		return await this.reviews.getShortOtherReviewAll(groupTitleId);
+	public async getShortOtherReviews(@Param() groupTitleIdDTO: GroupTitleIdDTO) {
+		return await this.reviews.getShortOtherReviewAll(groupTitleIdDTO.groupTitleId);
 	}
 
 	@Get(['/tags', '/tags/order-:order'])
-	public async getTagOrderReviews(@Query('page') page: number = 1, @Param('order') order: boolean = false) {
-		return await this.tags.getTagAll({limit: this.countTags, offset: (page-1)*this.countTags, order: !!order});
+	public async getTagOrderReviews(@Query() pageDTO: PageDTO, @Param() tagsOrderDTO: TagsOrderDTO) {
+		return await this.tags.getTagAll({limit: this.countTags, offset: (pageDTO.page-1)*this.countTags, ...tagsOrderDTO});
 	}
 
 	protected countEditorRows: number = 20;
 
 	@Get('/editor-short-part')
-	public async getShortEditorUsers(@Query('page') page: number = 1) {
-		return await this.users.getShortEditorUserAll(this.countEditorRows, (page-1)*this.countEditorRows);
+	public async getShortEditorUsers(@Query() pageDTO: PageDTO) {
+		return await this.users.getShortEditorUserAll(this.countEditorRows, (pageDTO.page-1)*this.countEditorRows);
 	}
 
 	@Get('/groups')
@@ -81,49 +90,19 @@ export class GuestController {
 	}
 
 	@Get('/part-titles/:query')
-	public async getTitlePart(@Param('query') query: string) {
-		return await this.titles.getPartTitleAll(this.countRows, 0, query);
+	public async getTitlePart(@Param() titlesQueryDTO: TitlesQueryDTO) {
+		return await this.titles.getPartTitleAll(this.countRows, 0, titlesQueryDTO.query);
 	}
 
 	@Get('/part-tags/:query')
-	public async getTagPart(@Param('query') query: string) {
-		return await this.tags.getPartTagAll(this.countRows, 0, query);
+	public async getTagPart(@Param() tagsQueryDTO: TagsQueryDTO) {
+		return await this.tags.getPartTagAll(this.countRows, 0, tagsQueryDTO.query);
 	}
 
 	@Get('/search/:query')
-	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
-		return await this.searchReview.getSearchAll(query, {limit: this.countRows, offset: (page-1)*this.countRows, condPublic: true, blocked: false});
+	public async getReviewSearchAll(@Param() searchDTO: SearchDTO, @Query() pageDTO: PageDTO) {
+		return await this.searchReview.getSearchAll(searchDTO.query, {
+			limit: this.countRows, offset: (pageDTO.page-1)*this.countRows, condPublic: true, blocked: false
+		});
 	}
-
-	/*
-	@Get('/search/:query')
-	public async getReviewSearchAll(@Param('query') query: string, @Query('page') page: number = 1) {
-		return await this.reviewSearchService.searchReviews(query);
-	}
-
-	@Post('/search/add')
-	public async setReviewOnSearch(@Body() review: any) {
-		return await this.reviewSearchService.indexReview(review);
-	}
-
-	@Post('/search/update')
-	public async updateReviewOnSearch(@Body() review: any) {
-		return await this.reviewSearchService.updateReview(review);
-	}
-
-	@Post('/search/addcomment')
-	public async addReviewComment() {
-		return await this.reviewSearchService.addReviewComment(8, 666, 'comment added to index!!!');
-	}
-
-	@Post('/search/deletecomment')
-	public async deleteReviewComment() {
-		return await this.reviewSearchService.deleteReviewComment(8, 666);
-	}
-
-	@Post('/search/updatecomment')
-	public async updateReviewComment() {
-		return await this.reviewSearchService.updateReviewComment(8, 666, '777777comment added to index!!!');
-	}
-	*/
 }

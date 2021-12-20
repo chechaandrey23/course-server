@@ -12,6 +12,14 @@ import { RatingsService } from '../entries/ratings/ratings.service';
 import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
 import { SearchReviewService } from '../entries/reviews/search.review.service';
+import { IdDTO } from '../dto/id.dto';
+import { PageDTO } from '../dto/page.dto';
+import { ReviewsFilterExtDTO } from '../dto/reviews.filter.ext.dto';
+import { SearchDTO } from '../dto/search.dto';
+import { TitlesQueryDTO } from '../dto/titles.query.dto';
+import { TagsQueryDTO } from '../dto/tags.query.dto';
+import { GroupTitleIdDTO } from '../dto/grouptitleid.dto';
+import { TagsOrderDTO } from '../dto/tags.order.dto';
 export declare class GuestController {
     private users;
     private roles;
@@ -30,14 +38,14 @@ export declare class GuestController {
     constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, searchReview: SearchReviewService);
     protected readonly countRows: number;
     protected readonly countTags: number;
-    getDescriptionOrderReviews(page: number, tags: number[], titles: number[], groups: number[], authors: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
-    getFullReview(id: number): Promise<import("../entries/reviews/review.model").Review>;
-    getShortOtherReviews(groupTitleId: number): Promise<import("../entries/reviews/review.model").Review[]>;
-    getTagOrderReviews(page?: number, order?: boolean): Promise<import("../entries/tags/tag.model").Tag[]>;
+    getDescriptionOrderReviews(reviewsFilterExtDTO: ReviewsFilterExtDTO): Promise<import("../entries/reviews/review.model").Review[]>;
+    getFullReview(idDTO: IdDTO): Promise<import("../entries/reviews/review.model").Review>;
+    getShortOtherReviews(groupTitleIdDTO: GroupTitleIdDTO): Promise<import("../entries/reviews/review.model").Review[]>;
+    getTagOrderReviews(pageDTO: PageDTO, tagsOrderDTO: TagsOrderDTO): Promise<import("../entries/tags/tag.model").Tag[]>;
     protected countEditorRows: number;
-    getShortEditorUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
+    getShortEditorUsers(pageDTO: PageDTO): Promise<import("../entries/users/user.model").User[]>;
     getGroupAll(): Promise<import("../entries/groups/group.model").Group[]>;
-    getTitlePart(query: string): Promise<import("../entries/titles/title.model").Title[]>;
-    getTagPart(query: string): Promise<import("../entries/tags/tag.model").Tag[]>;
-    getReviewSearchAll(query: string, page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
+    getTitlePart(titlesQueryDTO: TitlesQueryDTO): Promise<import("../entries/titles/title.model").Title[]>;
+    getTagPart(tagsQueryDTO: TagsQueryDTO): Promise<import("../entries/tags/tag.model").Tag[]>;
+    getReviewSearchAll(searchDTO: SearchDTO, pageDTO: PageDTO): Promise<import("../entries/reviews/review.model").Review[]>;
 }

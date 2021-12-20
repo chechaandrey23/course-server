@@ -1,6 +1,7 @@
 import {NestFactory} from '@nestjs/core';
 import {NestExpressApplication} from '@nestjs/platform-express';
 import {AppModule} from './app.module';
+import {ValidationPipe} from '@nestjs/common';
 
 import * as express from 'express';
 import * as path from 'path';
@@ -14,6 +15,8 @@ async function bootstrap() {
 	httpAdapter.use('/', express.static(path.resolve()+'/../client/build'));
 
 	httpAdapter.use(cookieParser());
+
+	app.useGlobalPipes(new ValidationPipe());
 
 	await app.listen(process.env.PORT || 3039);
 }

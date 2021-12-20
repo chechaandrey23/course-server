@@ -12,6 +12,14 @@ import { TagsService } from '../entries/tags/tags.service';
 import { RatingsService } from '../entries/ratings/ratings.service';
 import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
+import { SearchReviewService } from '../entries/reviews/search.review.service';
+import { IdDTO } from '../dto/id.dto';
+import { PageDTO } from '../dto/page.dto';
+import { TitleAddDTO } from '../dto/title.add.dto';
+import { TagAddDTO } from '../dto/tag.add.dto';
+import { ReviewsFilterDTO } from '../dto/reviews.filter.dto';
+import { ReviewAddWithoutDTO } from '../dto/review.add.without.dto';
+import { ReviewEditWithoutDTO } from '../dto/review.edit.without.dto';
 export declare class EditorController {
     private users;
     private roles;
@@ -26,16 +34,20 @@ export declare class EditorController {
     private ratings;
     private likes;
     private comments;
-    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService);
+    private searchReview;
+    constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, searchReview: SearchReviewService);
     protected countRows: number;
-    getReviewAll(req: any, page: number, tags: number[], titles: number[], groups: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
-    getFullReview(req: any, id: number): Promise<import("../entries/reviews/review.model").Review>;
-    newReview(req: any): Promise<void>;
-    editReview(req: any, id: number, description: string, text: string, authorRating: number, titleId: number, groupId: number, draft: boolean, tags: number[]): Promise<void>;
-    removeReview(req: any, id: number): Promise<void>;
-    newTitle(title: string, description: string): Promise<import("../entries/titles/title.model").Title>;
-    newTag(tag: string): Promise<import("../entries/tags/tag.model").Tag>;
+    getReviewAll(req: any, reviewsFilterDTO: ReviewsFilterDTO): Promise<import("../entries/reviews/review.model").Review[]>;
+    getFullReview(req: any, idDTO: IdDTO): Promise<import("../entries/reviews/review.model").Review>;
+    newReview(req: any, reviewAddWithoutDTO: ReviewAddWithoutDTO): Promise<any>;
+    editReview(req: any, reviewEditWithoutDTO: ReviewEditWithoutDTO): Promise<any>;
+    removeReview(req: any, idDTO: IdDTO): Promise<{
+        id: number;
+        deletedAt: string;
+    }>;
+    newTitle(titleAddDTO: TitleAddDTO): Promise<import("../entries/titles/title.model").Title>;
+    newTag(tagAddDTO: TagAddDTO): Promise<import("../entries/tags/tag.model").Tag>;
     protected countImageRows: number;
-    getImageAll(req: any, page?: number): Promise<import("../entries/images/image.model").Image[]>;
+    getImageAll(req: any, pageDTO: PageDTO): Promise<import("../entries/images/image.model").Image[]>;
     newImage(req: any, images: Array<Express.Multer.File>): Promise<import("../entries/images/image.model").Image[]>;
 }

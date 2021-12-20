@@ -28,11 +28,19 @@ const tags_service_1 = require("../entries/tags/tags.service");
 const ratings_service_1 = require("../entries/ratings/ratings.service");
 const likes_service_1 = require("../entries/likes/likes.service");
 const comments_service_1 = require("../entries/comments/comments.service");
+const search_review_service_1 = require("../entries/reviews/search.review.service");
 const jwt_access_auth_guard_1 = require("../auth/guards/jwt.access.auth.guard");
 const jwt_is_refresh_auth_guard_1 = require("../auth/guards/jwt.is.refresh.auth.guard");
 const editor_role_guard_1 = require("../auth/guards/editor.role.guard");
+const id_dto_1 = require("../dto/id.dto");
+const page_dto_1 = require("../dto/page.dto");
+const title_add_dto_1 = require("../dto/title.add.dto");
+const tag_add_dto_1 = require("../dto/tag.add.dto");
+const reviews_filter_dto_1 = require("../dto/reviews.filter.dto");
+const review_add_without_dto_1 = require("../dto/review.add.without.dto");
+const review_edit_without_dto_1 = require("../dto/review.edit.without.dto");
 let EditorController = class EditorController {
-    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments) {
+    constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, searchReview) {
         this.users = users;
         this.roles = roles;
         this.langs = langs;
@@ -46,36 +54,37 @@ let EditorController = class EditorController {
         this.ratings = ratings;
         this.likes = likes;
         this.comments = comments;
-        this.countRows = 20;
+        this.searchReview = searchReview;
+        this.countRows = 10;
         this.countImageRows = 20;
     }
-    async getReviewAll(req, page = 1, tags, titles, groups, sortField, sortType) {
+    async getReviewAll(req, reviewsFilterDTO) {
         return await this.reviews.getReviewAll({
-            condUserId: req.user.id, limit: this.countRows, offset: (page - 1) * this.countRows,
-            withTags: tags, withTitles: titles, withGroups: groups,
-            sortField: sortField, sortType: sortType
+            condUserId: req.user.id, limit: this.countRows, offset: (reviewsFilterDTO.page - 1) * this.countRows,
+            withTags: reviewsFilterDTO.tags, withTitles: reviewsFilterDTO.titles, withGroups: reviewsFilterDTO.groups,
+            sortField: reviewsFilterDTO.sortField, sortType: reviewsFilterDTO.sortType
         });
     }
-    async getFullReview(req, id) {
-        return await this.reviews.getReviewOne({ reviewId: id, condUserId: req.user.id });
+    async getFullReview(req, idDTO) {
+        return await this.reviews.getReviewOne({ reviewId: idDTO.id, condUserId: req.user.id });
     }
-    async newReview(req) {
-        throw new Error('NOT IMPLEMENTED REVIEW NEW');
+    async newReview(req, reviewAddWithoutDTO) {
+        return await this.searchReview.createReviewWithIndexing(Object.assign(Object.assign({}, reviewAddWithoutDTO), { userId: req.user.id, blocked: false }));
     }
-    async editReview(req, id, description, text, authorRating, titleId, groupId, draft, tags) {
-        throw new Error('NOT IMPLEMENTED REVIEW EDIT');
+    async editReview(req, reviewEditWithoutDTO) {
+        return await this.searchReview.updateReviewWithIndexing(Object.assign(Object.assign({}, reviewEditWithoutDTO), { userId: req.user.id }));
     }
-    async removeReview(req, id) {
-        throw new Error('NOT IMPLEMENTED REVIEW REMOVE');
+    async removeReview(req, idDTO) {
+        return await this.searchReview.removeReviewWithDeleteIndex(Object.assign(Object.assign({}, idDTO), { userId: req.user.id }));
     }
-    async newTitle(title, description) {
-        return await this.titles.createTitle(title, description);
+    async newTitle(titleAddDTO) {
+        return await this.titles.createTitle(titleAddDTO.title, titleAddDTO.description);
     }
-    async newTag(tag) {
-        return await this.tags.createTag(tag);
+    async newTag(tagAddDTO) {
+        return await this.tags.createTag(tagAddDTO.tag);
     }
-    async getImageAll(req, page = 1) {
-        return await this.images.getImageAll({ limit: this.countRows, offset: (page - 1) * this.countRows, condUserId: req.user.id });
+    async getImageAll(req, pageDTO) {
+        return await this.images.getImageAll({ limit: this.countImageRows, offset: (pageDTO.page - 1) * this.countImageRows, condUserId: req.user.id });
     }
     async newImage(req, images) {
         return await this.images.createImage({ userId: req.user.id, images });
@@ -84,86 +93,85 @@ let EditorController = class EditorController {
 __decorate([
     (0, common_1.Get)('/reviews'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('page')),
-    __param(2, (0, common_1.Query)('tags')),
-    __param(3, (0, common_1.Query)('titles')),
-    __param(4, (0, common_1.Query)('groups')),
-    __param(5, (0, common_1.Query)('sortField')),
-    __param(6, (0, common_1.Query)('sortType')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, Array, Array, Array, String, String]),
+    __metadata("design:paramtypes", [Object, reviews_filter_dto_1.ReviewsFilterDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "getReviewAll", null);
 __decorate([
     (0, common_1.Get)('/review/:id'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:paramtypes", [Object, id_dto_1.IdDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "getFullReview", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/review-new'),
     __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, review_add_without_dto_1.ReviewAddWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "newReview", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/review-edit'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('id')),
-    __param(2, (0, common_1.Body)('description')),
-    __param(3, (0, common_1.Body)('text')),
-    __param(4, (0, common_1.Body)('authorRating')),
-    __param(5, (0, common_1.Body)('titleId')),
-    __param(6, (0, common_1.Body)('groupId')),
-    __param(7, (0, common_1.Body)('draft')),
-    __param(8, (0, common_1.Body)('tags')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, String, String, Number, Number, Number, Boolean, Array]),
+    __metadata("design:paramtypes", [Object, review_edit_without_dto_1.ReviewEditWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "editReview", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/review-remove'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('id')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:paramtypes", [Object, id_dto_1.IdDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "removeReview", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/title-new'),
-    __param(0, (0, common_1.Body)('title')),
-    __param(1, (0, common_1.Body)('description')),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [title_add_dto_1.TitleAddDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "newTitle", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/tag-new'),
-    __param(0, (0, common_1.Body)('tag')),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [tag_add_dto_1.TagAddDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "newTag", null);
 __decorate([
     (0, common_1.Get)('/images'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:paramtypes", [Object, page_dto_1.PageDTO]),
     __metadata("design:returntype", Promise)
 ], EditorController.prototype, "getImageAll", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_is_refresh_auth_guard_1.JWTIsRefreshAuthGuard),
     (0, common_1.Post)('/image-new'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('images[]', 1)),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('images[]', 1, {
+        limits: {
+            fileSize: 3 * 1024 * 1024
+        },
+        fileFilter: (req, file, callback) => {
+            if (file.originalname.length > 100)
+                callback(new common_1.ConflictException('Origin filename must been not more than 100 characters'));
+            if (!/^image\//i.test(file.mimetype))
+                callback(new common_1.ConflictException('Invalid mime file type'));
+            callback(null, true);
+        }
+    })),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.UploadedFiles)()),
     __metadata("design:type", Function),
@@ -173,6 +181,7 @@ __decorate([
 EditorController = __decorate([
     (0, common_1.UseGuards)(editor_role_guard_1.EditorRoleGuard),
     (0, common_1.UseGuards)(jwt_access_auth_guard_1.JWTAccessAuthGuard),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true })),
     (0, common_1.Controller)('/editor'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         roles_service_1.RolesService,
@@ -186,7 +195,8 @@ EditorController = __decorate([
         tags_service_1.TagsService,
         ratings_service_1.RatingsService,
         likes_service_1.LikesService,
-        comments_service_1.CommentsService])
+        comments_service_1.CommentsService,
+        search_review_service_1.SearchReviewService])
 ], EditorController);
 exports.EditorController = EditorController;
 //# sourceMappingURL=editor.controller.js.map

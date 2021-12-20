@@ -26,11 +26,12 @@ export interface CreateReview {
     groupId: number;
     draft: boolean;
     tags: number[];
-    blocked: boolean;
+    blocked?: boolean;
     transaction?: Transaction;
 }
 export interface UpdateReview extends CreateReview {
     id: number;
+    blocked?: boolean;
     superEdit?: boolean;
 }
 export interface DeleteReview {

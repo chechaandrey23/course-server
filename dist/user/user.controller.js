@@ -31,6 +31,17 @@ const search_review_service_1 = require("../entries/reviews/search.review.servic
 const search_comment_service_1 = require("../entries/comments/search.comment.service");
 const jwt_access_auth_guard_1 = require("../auth/guards/jwt.access.auth.guard");
 const user_role_guard_1 = require("../auth/guards/user.role.guard");
+const id_dto_1 = require("../dto/id.dto");
+const page_dto_1 = require("../dto/page.dto");
+const reviews_filter_ext_dto_1 = require("../dto/reviews.filter.ext.dto");
+const userinfo_edit_without_dto_1 = require("../dto/userinfo.edit.without.dto");
+const rating_add_without_dto_1 = require("../dto/rating.add.without.dto");
+const like_add_without_dto_1 = require("../dto/like.add.without.dto");
+const search_dto_1 = require("../dto/search.dto");
+const comments_dto_1 = require("../dto/comments.dto");
+const comments_autoupdate_dto_1 = require("../dto/comments.autoupdate.dto");
+const comment_add_without_dto_1 = require("../dto/comment.add.without.dto");
+const comment_edit_without_dto_1 = require("../dto/comment.edit.without.dto");
 let UserController = class UserController {
     constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, searchReview, searchComment) {
         this.users = users;
@@ -50,22 +61,23 @@ let UserController = class UserController {
         this.searchComment = searchComment;
         this.countRows = 10;
     }
-    async getDescriptionOrderReviews(req, page = 1, tags, titles, groups, authors, sortField, sortType) {
+    async getDescriptionOrderReviews(req, reviewsFilterExtDTO) {
         return await this.reviews.getReviewAll({
-            condPublic: true, condBlocked: false, limit: this.countRows, offset: (page - 1) * this.countRows,
-            withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
-            sortField: sortField, sortType: sortType,
+            condPublic: true, condBlocked: false, limit: this.countRows, offset: (reviewsFilterExtDTO.page - 1) * this.countRows,
+            withTags: reviewsFilterExtDTO.tags, withTitles: reviewsFilterExtDTO.titles,
+            withGroups: reviewsFilterExtDTO.groups, withAuthors: reviewsFilterExtDTO.authors,
+            sortField: reviewsFilterExtDTO.sortField, sortType: reviewsFilterExtDTO.sortType,
             forUserId: req.user.id
         });
     }
-    async getFullReview(req, id) {
-        return await this.reviews.getReviewOne({ reviewId: id, forUserId: req.user.id, condPublic: true, condBlocked: false });
+    async getFullReview(req, idDTO) {
+        return await this.reviews.getReviewOne({ reviewId: idDTO.id, forUserId: req.user.id, condPublic: true, condBlocked: false });
     }
     async getUserObject(req) {
         return await this.users.getUserOne(req.user.id);
     }
-    async setUserSettings(req, id, first_name, last_name, themeId, langId) {
-        return await this.userInfos.editUserInfo({ id, userId: req.user.id, first_name, last_name, themeId, langId });
+    async setUserSettings(req, userInfoEditWithoutDTO) {
+        return await this.userInfos.editUserInfo(Object.assign({ userId: req.user.id }, userInfoEditWithoutDTO));
     }
     async getUserLangAll() {
         return await this.langs.getShortLangAll();
@@ -73,51 +85,47 @@ let UserController = class UserController {
     async getUserThemeAll() {
         return await this.themes.getShortThemeAll();
     }
-    async serUserRating(req, reviewId, rating) {
-        return await this.ratings.createRating({ reviewId, userId: req.user.id, rating });
+    async serUserRating(req, ratingAddWithoutDTO) {
+        return await this.ratings.createRating(Object.assign(Object.assign({}, ratingAddWithoutDTO), { userId: req.user.id }));
     }
-    async serUserLike(req, reviewId) {
-        return await this.likes.createLike({ reviewId, userId: req.user.id, like: true });
+    async serUserLike(req, likeAddWithoutDTO) {
+        return await this.likes.createLike(Object.assign(Object.assign({}, likeAddWithoutDTO), { userId: req.user.id, like: true }));
     }
-    async getComments(req, page = 1, reviewId) {
-        return await this.comments.getCommentReviewAll(this.countRows, (page - 1) * this.countRows, reviewId, true, false);
+    async getComments(req, commentsDTO) {
+        return await this.comments.getCommentReviewAll(this.countRows, (commentsDTO.page - 1) * this.countRows, commentsDTO.reviewId, true, false);
     }
-    async autoUpdateComments(req, time, reviewId) {
-        return await this.comments.getAutoUpdateCommentAll(time, reviewId, true, false);
+    async autoUpdateComments(req, commentsAutoUpdateDTO) {
+        return await this.comments.getAutoUpdateCommentAll(commentsAutoUpdateDTO.time, commentsAutoUpdateDTO.reviewId, true, false);
     }
-    async newComment(req, reviewId, comment) {
-        return await this.searchComment.createCommentWithIndexing({ reviewId, userId: req.user.id, comment, draft: false, blocked: false });
+    async newComment(req, commentAddWithoutDTO) {
+        return await this.searchComment.createCommentWithIndexing(Object.assign(Object.assign({}, commentAddWithoutDTO), { userId: req.user.id, draft: false, blocked: false }));
     }
-    async editComment(req, id, reviewId, comment) {
-        return await this.searchComment.updateCommentWithIndexing({ id, reviewId, userId: req.user.id, comment, draft: false });
+    async editComment(req, commentEditWithoutDTO) {
+        return await this.searchComment.updateCommentWithIndexing(Object.assign(Object.assign({}, commentEditWithoutDTO), { userId: req.user.id, draft: false }));
     }
-    async removeComment(req, id) {
-        return await this.searchComment.removeCommentWithIndexing({ id, userId: req.user.id });
+    async removeComment(req, idDTO) {
+        return await this.searchComment.removeCommentWithIndexing(Object.assign(Object.assign({}, idDTO), { userId: req.user.id }));
     }
-    async getReviewSearchAll(query, page = 1) {
-        return await this.searchReview.getSearchAll(query, { limit: this.countRows, offset: (page - 1) * this.countRows, condPublic: true, blocked: false });
+    async getReviewSearchAll(req, searchDTO, pageDTO) {
+        return await this.searchReview.getSearchAll(searchDTO.query, {
+            limit: this.countRows, offset: (pageDTO.page - 1) * this.countRows, condPublic: true, blocked: false, forUserId: req.user.id
+        });
     }
 };
 __decorate([
     (0, common_1.Get)('/reviews'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('page')),
-    __param(2, (0, common_1.Query)('tags')),
-    __param(3, (0, common_1.Query)('titles')),
-    __param(4, (0, common_1.Query)('groups')),
-    __param(5, (0, common_1.Query)('authors')),
-    __param(6, (0, common_1.Query)('sortField')),
-    __param(7, (0, common_1.Query)('sortType')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, Array, Array, Array, Array, String, String]),
+    __metadata("design:paramtypes", [Object, reviews_filter_ext_dto_1.ReviewsFilterExtDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getDescriptionOrderReviews", null);
 __decorate([
     (0, common_1.Get)('/review/:id'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:paramtypes", [Object, id_dto_1.IdDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getFullReview", null);
 __decorate([
@@ -130,13 +138,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('/user-settings'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('id')),
-    __param(2, (0, common_1.Body)('first_name')),
-    __param(3, (0, common_1.Body)('last_name')),
-    __param(4, (0, common_1.Body)('themeId')),
-    __param(5, (0, common_1.Body)('langId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, String, String, Number, Number]),
+    __metadata("design:paramtypes", [Object, userinfo_edit_without_dto_1.UserInfoEditWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "setUserSettings", null);
 __decorate([
@@ -154,76 +158,72 @@ __decorate([
 __decorate([
     (0, common_1.Post)('/rating-new'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('reviewId')),
-    __param(2, (0, common_1.Body)('rating')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, Number]),
+    __metadata("design:paramtypes", [Object, rating_add_without_dto_1.RatingAddWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "serUserRating", null);
 __decorate([
     (0, common_1.Post)('/like-new'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('reviewId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:paramtypes", [Object, like_add_without_dto_1.LikeAddWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "serUserLike", null);
 __decorate([
     (0, common_1.Get)('/comments'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('page')),
-    __param(2, (0, common_1.Query)('reviewId')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, Object]),
+    __metadata("design:paramtypes", [Object, comments_dto_1.CommentsDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getComments", null);
 __decorate([
     (0, common_1.Get)('/auto-update-comments'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Query)('time')),
-    __param(2, (0, common_1.Query)('reviewId')),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, Object]),
+    __metadata("design:paramtypes", [Object, comments_autoupdate_dto_1.CommentsAutoUpdateDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "autoUpdateComments", null);
 __decorate([
     (0, common_1.Post)('/new-comment'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('reviewId')),
-    __param(2, (0, common_1.Body)('comment')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, String]),
+    __metadata("design:paramtypes", [Object, comment_add_without_dto_1.CommentAddWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "newComment", null);
 __decorate([
     (0, common_1.Post)('/edit-comment'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('id')),
-    __param(2, (0, common_1.Body)('reviewId')),
-    __param(3, (0, common_1.Body)('comment')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number, Number, String]),
+    __metadata("design:paramtypes", [Object, comment_edit_without_dto_1.CommentEditWithoutDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "editComment", null);
 __decorate([
     (0, common_1.Post)('/remove-comment'),
     __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)('id')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:paramtypes", [Object, id_dto_1.IdDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "removeComment", null);
 __decorate([
     (0, common_1.Get)('/search/:query'),
-    __param(0, (0, common_1.Param)('query')),
-    __param(1, (0, common_1.Query)('page')),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)()),
+    __param(2, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:paramtypes", [Object, search_dto_1.SearchDTO, page_dto_1.PageDTO]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "getReviewSearchAll", null);
 UserController = __decorate([
     (0, common_1.UseGuards)(user_role_guard_1.UserRoleGuard),
     (0, common_1.UseGuards)(jwt_access_auth_guard_1.JWTAccessAuthGuard),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true })),
     (0, common_1.Controller)('/user'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         roles_service_1.RolesService,

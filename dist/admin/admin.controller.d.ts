@@ -15,6 +15,37 @@ import { CommentsService } from '../entries/comments/comments.service';
 import { RefreshTokenService } from '../entries/refreshtoken/refresh.token.service';
 import { SearchReviewService } from '../entries/reviews/search.review.service';
 import { SearchCommentService } from '../entries/comments/search.comment.service';
+import { IdDTO } from '../dto/id.dto';
+import { PageDTO } from '../dto/page.dto';
+import { ReviewIdDTO } from '../dto/reviewid.dto';
+import { ReviewSearchIdDTO } from '../dto/reviewsearchid.dto';
+import { CommentAddDTO } from '../dto/comment.add.dto';
+import { CommentEditDTO } from '../dto/comment.edit.dto';
+import { GroupAddDTO } from '../dto/group.add.dto';
+import { GroupEditDTO } from '../dto/group.edit.dto';
+import { ImageAddDTO } from '../dto/image.add.dto';
+import { ImageEditDTO } from '../dto/image.edit.dto';
+import { LangAddDTO } from '../dto/lang.add.dto';
+import { LangEditDTO } from '../dto/lang.edit.dto';
+import { LikeAddDTO } from '../dto/like.add.dto';
+import { LikeEditDTO } from '../dto/like.edit.dto';
+import { RatingAddDTO } from '../dto/rating.add.dto';
+import { RatingEditDTO } from '../dto/rating.edit.dto';
+import { ReviewAddDTO } from '../dto/review.add.dto';
+import { ReviewEditDTO } from '../dto/review.edit.dto';
+import { RoleAddDTO } from '../dto/role.add.dto';
+import { RoleEditDTO } from '../dto/role.edit.dto';
+import { TagAddDTO } from '../dto/tag.add.dto';
+import { TagEditDTO } from '../dto/tag.edit.dto';
+import { ThemeAddDTO } from '../dto/theme.add.dto';
+import { ThemeEditDTO } from '../dto/theme.edit.dto';
+import { TitleAddDTO } from '../dto/title.add.dto';
+import { TitleEditDTO } from '../dto/title.edit.dto';
+import { UserAddDTO } from '../dto/user.add.dto';
+import { UserEditDTO } from '../dto/user.edit.dto';
+import { UserSocialAddDTO } from '../dto/user.social.add.dto';
+import { UserInfoAddDTO } from '../dto/userinfo.add.dto';
+import { UserInfoEditDTO } from '../dto/userinfo.edit.dto';
 export declare class AdminController {
     private users;
     private roles;
@@ -34,223 +65,224 @@ export declare class AdminController {
     private searchComment;
     constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, refreshTokens: RefreshTokenService, searchReview: SearchReviewService, searchComment: SearchCommentService);
     protected readonly countRows: number;
-    getRefreshTokens(page?: number): Promise<import("../entries/refreshtoken/refresh.token.model").RefreshToken[]>;
-    deleteRefreshToken(id: number): Promise<{
+    getRefreshTokens(pageDTO: PageDTO): Promise<import("../entries/refreshtoken/refresh.token.model").RefreshToken[]>;
+    deleteRefreshToken(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    eraseRefreshToken(id: number): Promise<{
+    eraseRefreshToken(idDTO: IdDTO): Promise<{
         id: number;
         dateEndRT1: any;
     }>;
-    getReviewForSearchAll(page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
-    getReviewIndexElasticSearch(reviewId: number, searchId: string): Promise<{
+    getReviewForSearchAll(pageDTO: PageDTO): Promise<import("../entries/reviews/review.model").Review[]>;
+    getReviewIndexElasticSearch(reviewSearchIdDTO: ReviewSearchIdDTO): Promise<{
         review: import("../entries/reviews/review.model").Review;
         index: import("@elastic/elasticsearch").ApiResponse<Record<string, any>, unknown>;
     }>;
-    indexReviewElasticSearch(reviewId: number): Promise<{
+    indexReviewElasticSearch(reviewIdDTO: ReviewIdDTO): Promise<{
         id: number;
         searchId: any;
     }>;
-    deleteIndexReviewElasticSearch(reviewId: number, searchId: string): Promise<{
+    deleteIndexReviewElasticSearch(reviewSearchIdDTO: ReviewSearchIdDTO): Promise<{
         id: number;
         searchId: any;
     }>;
-    getUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
-    addUser(user: string, password: string, email: string, first_name: string, last_name: string): Promise<any>;
-    addSocialUser(social_id: string, vendor: string, soft_create: boolean, displayName: string): Promise<any>;
-    editUserAdmin(id: number, user: string, social_id: string, emial: string, blocked: boolean, activated: boolean, roles: number[]): Promise<import("../entries/users/user.model").User>;
-    removeUser(id: number): Promise<{
+    getUsers(pageDTO: PageDTO): Promise<import("../entries/users/user.model").User[]>;
+    addUser(userAddDTO: UserAddDTO): Promise<any>;
+    addSocialUser(userSocialAddDTO: UserSocialAddDTO): Promise<any>;
+    editUserAdmin(userEditDTO: UserEditDTO): Promise<import("../entries/users/user.model").User>;
+    removeUser(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreUser(id: number): Promise<{
+    restoreUser(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteUser(id: number): Promise<{
+    deleteUser(idDTO: IdDTO): Promise<{
         id: number;
     }>;
     protected shortUsersCount: number;
-    getShortUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
-    getShortEditorUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
-    getShortUserUsers(page?: number): Promise<import("../entries/users/user.model").User[]>;
-    getUserRoleAll(page?: number): Promise<import("../entries/users/user.roles.model").UserRoles[]>;
-    getUserInfos(page?: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo[]>;
-    addUserInfo(userId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
-    editUserInfo(id: number, userId: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
-    removeUserInfo(id: number): Promise<{
+    getShortUsers(pageDTO: PageDTO): Promise<import("../entries/users/user.model").User[]>;
+    getShortEditorUsers(pageDTO: PageDTO): Promise<import("../entries/users/user.model").User[]>;
+    getShortUserUsers(pageDTO: PageDTO): Promise<import("../entries/users/user.model").User[]>;
+    getUserRoleAll(pageDTO: PageDTO): Promise<import("../entries/users/user.roles.model").UserRoles[]>;
+    getUserInfos(pageDTO: PageDTO): Promise<import("../entries/userinfos/userinfo.model").UserInfo[]>;
+    addUserInfo(userInfoAddDTO: UserInfoAddDTO): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
+    editUserInfo(userInfoEditDTO: UserInfoEditDTO): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
+    removeUserInfo(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreUserInfo(id: number): Promise<{
+    restoreUserInfo(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteUserInfo(id: number): Promise<{
+    deleteUserInfo(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    getRoles(page?: number): Promise<import("../entries/roles/role.model").Role[]>;
-    addRole(role: number, title: string, description: string): Promise<import("../entries/roles/role.model").Role>;
-    editRole(id: number, role: number, title: string, description: string): Promise<import("../entries/roles/role.model").Role>;
-    removeRole(id: number): Promise<{
+    getRoles(pageDTO: PageDTO): Promise<import("../entries/roles/role.model").Role[]>;
+    addRole(roleAddDTO: RoleAddDTO): Promise<import("../entries/roles/role.model").Role>;
+    editRole(roleEditDTO: RoleEditDTO): Promise<import("../entries/roles/role.model").Role>;
+    removeRole(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreRole(id: number): Promise<{
+    restoreRole(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteRole(id: number): Promise<{
+    deleteRole(idDTO: IdDTO): Promise<{
         id: number;
     }>;
     getShortRoles(): Promise<import("../entries/roles/role.model").Role[]>;
-    getLangs(page?: number): Promise<import("../entries/langs/lang.model").Lang[]>;
-    addLang(lang: string, title: string, description: string): Promise<import("../entries/langs/lang.model").Lang>;
-    editLang(id: number, lang: string, title: string, description: string): Promise<import("../entries/langs/lang.model").Lang>;
-    removeLang(id: number): Promise<{
+    getLangs(pageDTO: PageDTO): Promise<import("../entries/langs/lang.model").Lang[]>;
+    addLang(langAddDTO: LangAddDTO): Promise<import("../entries/langs/lang.model").Lang>;
+    editLang(langEditDTO: LangEditDTO): Promise<import("../entries/langs/lang.model").Lang>;
+    removeLang(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreLang(id: number): Promise<{
+    restoreLang(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteLang(id: number): Promise<{
+    deleteLang(idDTO: IdDTO): Promise<{
         id: number;
     }>;
     getShortLangs(): Promise<import("../entries/langs/lang.model").Lang[]>;
-    getThemes(page?: number): Promise<import("../entries/themes/theme.model").Theme[]>;
-    addTheme(theme: string, title: string, description: string): Promise<import("../entries/themes/theme.model").Theme>;
-    editTheme(id: number, theme: string, title: string, description: string): Promise<import("../entries/themes/theme.model").Theme>;
-    removeTheme(id: number): Promise<{
+    getThemes(pageDTO: PageDTO): Promise<import("../entries/themes/theme.model").Theme[]>;
+    addTheme(themeAddDTO: ThemeAddDTO): Promise<import("../entries/themes/theme.model").Theme>;
+    editTheme(themeEditDTO: ThemeEditDTO): Promise<import("../entries/themes/theme.model").Theme>;
+    removeTheme(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreTheme(id: number): Promise<{
+    restoreTheme(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteTheme(id: number): Promise<{
+    deleteTheme(idDTO: IdDTO): Promise<{
         id: number;
     }>;
     getShortThemes(): Promise<import("../entries/themes/theme.model").Theme[]>;
-    getGroups(page?: number): Promise<import("../entries/groups/group.model").Group[]>;
-    addGroup(group: string, description: string): Promise<import("../entries/groups/group.model").Group>;
-    editGroup(id: number, group: string, description: string): Promise<import("../entries/groups/group.model").Group>;
-    removeGroup(id: number): Promise<{
+    getGroups(pageDTO: PageDTO): Promise<import("../entries/groups/group.model").Group[]>;
+    addGroup(groupAddDTO: GroupAddDTO): Promise<import("../entries/groups/group.model").Group>;
+    editGroup(groupEditDTO: GroupEditDTO): Promise<import("../entries/groups/group.model").Group>;
+    removeGroup(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreGroup(id: number): Promise<{
+    restoreGroup(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteGroup(id: number): Promise<{
+    deleteGroup(idDTO: IdDTO): Promise<{
         id: number;
     }>;
     getShortGroups(): Promise<import("../entries/groups/group.model").Group[]>;
-    getTitles(page?: number): Promise<import("../entries/titles/title.model").Title[]>;
-    addTitle(title: string, description: string): Promise<import("../entries/titles/title.model").Title>;
-    editTitle(id: number, title: string, description: string): Promise<import("../entries/titles/title.model").Title>;
-    removeTitle(id: number): Promise<{
+    protected shortTitlesCount: number;
+    getTitles(pageDTO: PageDTO): Promise<import("../entries/titles/title.model").Title[]>;
+    addTitle(titleAddDTO: TitleAddDTO): Promise<import("../entries/titles/title.model").Title>;
+    editTitle(titleEditDTO: TitleEditDTO): Promise<import("../entries/titles/title.model").Title>;
+    removeTitle(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreTitle(id: number): Promise<{
+    restoreTitle(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteTitle(id: number): Promise<{
+    deleteTitle(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    getTitleGroupAll(page?: number): Promise<import("../entries/titles/title.groups.model").TitleGroups[]>;
-    getShortTitles(page?: number): Promise<import("../entries/titles/title.model").Title[]>;
-    getReviews(page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
-    getReview(reviewId: any): Promise<import("../entries/reviews/review.model").Review>;
+    getTitleGroupAll(pageDTO: PageDTO): Promise<import("../entries/titles/title.groups.model").TitleGroups[]>;
+    getShortTitles(pageDTO: PageDTO): Promise<import("../entries/titles/title.model").Title[]>;
+    getReviews(pageDTO: PageDTO): Promise<import("../entries/reviews/review.model").Review[]>;
+    getReview(reviewIdDTO: ReviewIdDTO): Promise<import("../entries/reviews/review.model").Review>;
     getShortReviews(): Promise<import("../entries/reviews/review.model").Review[]>;
-    addReview(description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<any>;
-    editReview(id: number, description: string, text: string, authorRating: number, userId: number, titleId: number, groupId: number, draft: boolean, tags: number[], blocked: boolean): Promise<any>;
-    removeReview(id: number): Promise<{
+    addReview(reviewAddDTO: ReviewAddDTO): Promise<any>;
+    editReview(reviewEditDTO: ReviewEditDTO): Promise<any>;
+    removeReview(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreReview(id: number): Promise<{
+    restoreReview(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteReview(id: number): Promise<{
+    deleteReview(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    getReviewTagAll(page?: number): Promise<import("../entries/reviews/review.tags.model").ReviewTags[]>;
-    getImages(page?: number): Promise<import("../entries/images/image.model").Image[]>;
-    addImage(userId: number, images: Array<Express.Multer.File>): Promise<import("../entries/images/image.model").Image[]>;
-    editImage(id: number, userId: number): Promise<import("../entries/images/image.model").Image[]>;
-    removeImage(id: number): Promise<{
+    getReviewTagAll(pageDTO: PageDTO): Promise<import("../entries/reviews/review.tags.model").ReviewTags[]>;
+    getImages(pageDTO: PageDTO): Promise<import("../entries/images/image.model").Image[]>;
+    addImage(imageAddDTO: ImageAddDTO, images: Array<Express.Multer.File>): Promise<import("../entries/images/image.model").Image[]>;
+    editImage(imageEditDTO: ImageEditDTO): Promise<import("../entries/images/image.model").Image[]>;
+    removeImage(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreImage(id: number): Promise<{
+    restoreImage(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteImage(id: number): Promise<{
+    deleteImage(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    getTags(page?: number): Promise<import("../entries/tags/tag.model").Tag[]>;
-    addTag(tag: string): Promise<import("../entries/tags/tag.model").Tag>;
-    editTag(id: number, tag: string): Promise<import("../entries/tags/tag.model").Tag>;
-    removeTag(id: number): Promise<{
+    getTags(pageDTO: PageDTO): Promise<import("../entries/tags/tag.model").Tag[]>;
+    addTag(tagAddDTO: TagAddDTO): Promise<import("../entries/tags/tag.model").Tag>;
+    editTag(tagEditDTO: TagEditDTO): Promise<import("../entries/tags/tag.model").Tag>;
+    removeTag(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreTag(id: number): Promise<{
+    restoreTag(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteTag(id: number): Promise<{
+    deleteTag(idDTO: IdDTO): Promise<{
         id: number;
     }>;
     getShortTags(): Promise<import("../entries/tags/tag.model").Tag[]>;
-    getRatings(page?: number): Promise<import("../entries/ratings/rating.model").Rating[]>;
-    addRating(reviewId: number, userId: number, rating: number): Promise<import("../entries/ratings/rating.model").Rating>;
-    editRating(id: number, reviewId: number, userId: number, rating: number): Promise<import("../entries/ratings/rating.model").Rating>;
-    removeRating(id: number): Promise<{
+    getRatings(pageDTO: PageDTO): Promise<import("../entries/ratings/rating.model").Rating[]>;
+    addRating(ratingAddDTO: RatingAddDTO): Promise<import("../entries/ratings/rating.model").Rating>;
+    editRating(ratingEditDTO: RatingEditDTO): Promise<import("../entries/ratings/rating.model").Rating>;
+    removeRating(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreRating(id: number): Promise<{
+    restoreRating(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteRating(id: number): Promise<{
+    deleteRating(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    getLikes(page?: number): Promise<import("../entries/likes/like.model").Like[]>;
-    addLike(reviewId: number, userId: number, like: boolean): Promise<import("../entries/likes/like.model").Like>;
-    editLike(id: number, reviewId: number, userId: number, like: boolean): Promise<import("../entries/likes/like.model").Like>;
-    removeLike(id: number): Promise<{
+    getLikes(pageDTO: PageDTO): Promise<import("../entries/likes/like.model").Like[]>;
+    addLike(likeAddDTO: LikeAddDTO): Promise<import("../entries/likes/like.model").Like>;
+    editLike(likeEditDTO: LikeEditDTO): Promise<import("../entries/likes/like.model").Like>;
+    removeLike(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreLike(id: number): Promise<{
+    restoreLike(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteLike(id: number): Promise<{
+    deleteLike(idDTO: IdDTO): Promise<{
         id: number;
     }>;
-    getComments(page?: number): Promise<import("../entries/comments/comment.model").Comment[]>;
-    addComment(reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean): Promise<any>;
-    editComment(id: number, reviewId: number, userId: number, comment: string, draft: boolean, blocked: boolean): Promise<any>;
-    removeComment(id: number): Promise<{
+    getComments(pageDTO: PageDTO): Promise<import("../entries/comments/comment.model").Comment[]>;
+    addComment(commentAddDTO: CommentAddDTO): Promise<any>;
+    editComment(commentEditDTO: CommentEditDTO): Promise<any>;
+    removeComment(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    restoreComment(id: number): Promise<{
+    restoreComment(idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: any;
     }>;
-    deleteComment(id: number): Promise<{
+    deleteComment(idDTO: IdDTO): Promise<{
         id: number;
     }>;
 }

@@ -41,12 +41,13 @@ export interface CreateReview {
 	groupId: number;
 	draft: boolean;
 	tags: number[];
-	blocked: boolean;
+	blocked?: boolean;
 	transaction?: Transaction;
 }
 
 export interface UpdateReview extends CreateReview {
 	id: number;
+	blocked?: boolean;
 	superEdit?: boolean;
 }
 
@@ -146,13 +147,13 @@ export class ReviewsService {
 
 				await this.reviews.update({
 					description: opts.description,
-					blocked: !!opts.blocked,
+					//blocked: !!opts.blocked,
 					text: opts.text,
 					authorRating: opts.authorRating,
 					titleGroupId: res0.getDataValue('id'),
 					draft: !!opts.draft,
 					//userId: opts.userId,
-					...(opts.superEdit?{userId: opts.userId}:{})
+					...(opts.superEdit?{userId: opts.userId, blocked: !!opts.blocked}:{})
 				}, {where: {id, ...(opts.superEdit?{}:{userId: opts.userId})}, transaction: t});
 
 				//await this._createReviewOther(t, tags, id);
@@ -346,7 +347,7 @@ export class ReviewsService {
 			includeTitleGroups,
 			includeTags,
 			//{model: Rating, attributes: [], paranoid}
-		], where: {}, subQuery:false, paranoid, transaction};
+		], where: {}, /*subQuery:false, */paranoid, transaction};
 
 		let otherQuery: any = {};
 
@@ -438,6 +439,7 @@ export class ReviewsService {
 
 		if(opts.condUserId) query.where = {...query.where, userId: opts.condUserId};
 		if(opts.condPublic !== undefined) query.where = {...query.where, draft: !opts.condPublic};
+		if(opts.condBlocked !== undefined) query.where = {...query.where, blocked: !!opts.condBlocked};
 
 		return {...query, ...otherQuery};
 	}

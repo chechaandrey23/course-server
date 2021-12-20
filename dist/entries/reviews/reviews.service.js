@@ -102,7 +102,7 @@ let ReviewsService = class ReviewsService {
                     if (!res)
                         throw new common_1.ConflictException(`EDIT: User "${opts.userId}" cannot edit content that is not the creator`);
                 }
-                await this.reviews.update(Object.assign({ description: opts.description, blocked: !!opts.blocked, text: opts.text, authorRating: opts.authorRating, titleGroupId: res0.getDataValue('id'), draft: !!opts.draft }, (opts.superEdit ? { userId: opts.userId } : {})), { where: Object.assign({ id }, (opts.superEdit ? {} : { userId: opts.userId })), transaction: t });
+                await this.reviews.update(Object.assign({ description: opts.description, text: opts.text, authorRating: opts.authorRating, titleGroupId: res0.getDataValue('id'), draft: !!opts.draft }, (opts.superEdit ? { userId: opts.userId, blocked: !!opts.blocked } : {})), { where: Object.assign({ id }, (opts.superEdit ? {} : { userId: opts.userId })), transaction: t });
                 await this._updateReviewTag(t, id, opts.tags);
                 return await this.reviews.findOne(this.buildQueryOne({ reviewId: id, transaction: t }));
             });
@@ -231,7 +231,7 @@ let ReviewsService = class ReviewsService {
                 includeUsers,
                 includeTitleGroups,
                 includeTags,
-            ], where: {}, subQuery: false, paranoid, transaction };
+            ], where: {}, paranoid, transaction };
         let otherQuery = {};
         if (opts.limit !== undefined) {
             otherQuery.limit = opts.limit;
@@ -318,6 +318,8 @@ let ReviewsService = class ReviewsService {
             query.where = Object.assign(Object.assign({}, query.where), { userId: opts.condUserId });
         if (opts.condPublic !== undefined)
             query.where = Object.assign(Object.assign({}, query.where), { draft: !opts.condPublic });
+        if (opts.condBlocked !== undefined)
+            query.where = Object.assign(Object.assign({}, query.where), { blocked: !!opts.condBlocked });
         return Object.assign(Object.assign({}, query), otherQuery);
     }
     async getReviewTagAll(count, offset = 0) {

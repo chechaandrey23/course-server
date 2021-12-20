@@ -13,6 +13,17 @@ import { LikesService } from '../entries/likes/likes.service';
 import { CommentsService } from '../entries/comments/comments.service';
 import { SearchReviewService } from '../entries/reviews/search.review.service';
 import { SearchCommentService } from '../entries/comments/search.comment.service';
+import { IdDTO } from '../dto/id.dto';
+import { PageDTO } from '../dto/page.dto';
+import { ReviewsFilterExtDTO } from '../dto/reviews.filter.ext.dto';
+import { UserInfoEditWithoutDTO } from '../dto/userinfo.edit.without.dto';
+import { RatingAddWithoutDTO } from '../dto/rating.add.without.dto';
+import { LikeAddWithoutDTO } from '../dto/like.add.without.dto';
+import { SearchDTO } from '../dto/search.dto';
+import { CommentsDTO } from '../dto/comments.dto';
+import { CommentsAutoUpdateDTO } from '../dto/comments.autoupdate.dto';
+import { CommentAddWithoutDTO } from '../dto/comment.add.without.dto';
+import { CommentEditWithoutDTO } from '../dto/comment.edit.without.dto';
 export declare class UserController {
     private users;
     private roles;
@@ -31,21 +42,21 @@ export declare class UserController {
     private searchComment;
     constructor(users: UsersService, roles: RolesService, langs: LangsService, themes: ThemesService, userInfos: UserInfosService, groups: GroupsService, titles: TitlesService, reviews: ReviewsService, images: ImagesService, tags: TagsService, ratings: RatingsService, likes: LikesService, comments: CommentsService, searchReview: SearchReviewService, searchComment: SearchCommentService);
     protected readonly countRows: number;
-    getDescriptionOrderReviews(req: any, page: number, tags: number[], titles: number[], groups: number[], authors: number[], sortField: string, sortType: "ASC" | "DESC"): Promise<import("../entries/reviews/review.model").Review[]>;
-    getFullReview(req: any, id: number): Promise<import("../entries/reviews/review.model").Review>;
+    getDescriptionOrderReviews(req: any, reviewsFilterExtDTO: ReviewsFilterExtDTO): Promise<import("../entries/reviews/review.model").Review[]>;
+    getFullReview(req: any, idDTO: IdDTO): Promise<import("../entries/reviews/review.model").Review>;
     getUserObject(req: any): Promise<import("../entries/users/user.model").User>;
-    setUserSettings(req: any, id: number, first_name: string, last_name: string, themeId: number, langId: number): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
+    setUserSettings(req: any, userInfoEditWithoutDTO: UserInfoEditWithoutDTO): Promise<import("../entries/userinfos/userinfo.model").UserInfo>;
     getUserLangAll(): Promise<import("../entries/langs/lang.model").Lang[]>;
     getUserThemeAll(): Promise<import("../entries/themes/theme.model").Theme[]>;
-    serUserRating(req: any, reviewId: number, rating: number): Promise<import("../entries/ratings/rating.model").Rating>;
-    serUserLike(req: any, reviewId: number): Promise<import("../entries/likes/like.model").Like>;
-    getComments(req: any, page: number, reviewId: any): Promise<import("../entries/comments/comment.model").Comment[]>;
-    autoUpdateComments(req: any, time: number, reviewId: any): Promise<import("../entries/comments/comment.model").Comment[]>;
-    newComment(req: any, reviewId: number, comment: string): Promise<any>;
-    editComment(req: any, id: number, reviewId: number, comment: string): Promise<any>;
-    removeComment(req: any, id: number): Promise<{
+    serUserRating(req: any, ratingAddWithoutDTO: RatingAddWithoutDTO): Promise<import("../entries/ratings/rating.model").Rating>;
+    serUserLike(req: any, likeAddWithoutDTO: LikeAddWithoutDTO): Promise<import("../entries/likes/like.model").Like>;
+    getComments(req: any, commentsDTO: CommentsDTO): Promise<import("../entries/comments/comment.model").Comment[]>;
+    autoUpdateComments(req: any, commentsAutoUpdateDTO: CommentsAutoUpdateDTO): Promise<import("../entries/comments/comment.model").Comment[]>;
+    newComment(req: any, commentAddWithoutDTO: CommentAddWithoutDTO): Promise<any>;
+    editComment(req: any, commentEditWithoutDTO: CommentEditWithoutDTO): Promise<any>;
+    removeComment(req: any, idDTO: IdDTO): Promise<{
         id: number;
         deletedAt: string;
     }>;
-    getReviewSearchAll(query: string, page?: number): Promise<import("../entries/reviews/review.model").Review[]>;
+    getReviewSearchAll(req: any, searchDTO: SearchDTO, pageDTO: PageDTO): Promise<import("../entries/reviews/review.model").Review[]>;
 }

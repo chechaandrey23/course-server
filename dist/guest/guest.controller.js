@@ -28,6 +28,14 @@ const ratings_service_1 = require("../entries/ratings/ratings.service");
 const likes_service_1 = require("../entries/likes/likes.service");
 const comments_service_1 = require("../entries/comments/comments.service");
 const search_review_service_1 = require("../entries/reviews/search.review.service");
+const id_dto_1 = require("../dto/id.dto");
+const page_dto_1 = require("../dto/page.dto");
+const reviews_filter_ext_dto_1 = require("../dto/reviews.filter.ext.dto");
+const search_dto_1 = require("../dto/search.dto");
+const titles_query_dto_1 = require("../dto/titles.query.dto");
+const tags_query_dto_1 = require("../dto/tags.query.dto");
+const grouptitleid_dto_1 = require("../dto/grouptitleid.dto");
+const tags_order_dto_1 = require("../dto/tags.order.dto");
 let GuestController = class GuestController {
     constructor(users, roles, langs, themes, userInfos, groups, titles, reviews, images, tags, ratings, likes, comments, searchReview) {
         this.users = users;
@@ -48,78 +56,75 @@ let GuestController = class GuestController {
         this.countTags = 25;
         this.countEditorRows = 20;
     }
-    async getDescriptionOrderReviews(page = 1, tags, titles, groups, authors, sortField, sortType) {
+    async getDescriptionOrderReviews(reviewsFilterExtDTO) {
         return await this.reviews.getReviewAll({
-            condPublic: true, condBlocked: false, limit: this.countRows, offset: (page - 1) * this.countRows,
-            withTags: tags, withTitles: titles, withGroups: groups, withAuthors: authors,
-            sortField: sortField, sortType: sortType
+            condPublic: true, condBlocked: false, limit: this.countRows, offset: (reviewsFilterExtDTO.page - 1) * this.countRows,
+            withTags: reviewsFilterExtDTO.tags, withTitles: reviewsFilterExtDTO.titles,
+            withGroups: reviewsFilterExtDTO.groups, withAuthors: reviewsFilterExtDTO.authors,
+            sortField: reviewsFilterExtDTO.sortField, sortType: reviewsFilterExtDTO.sortType
         });
     }
-    async getFullReview(id) {
-        return await this.reviews.getReviewOne({ reviewId: id, condPublic: true, condBlocked: false });
+    async getFullReview(idDTO) {
+        return await this.reviews.getReviewOne({ reviewId: idDTO.id, condPublic: true, condBlocked: false });
     }
-    async getShortOtherReviews(groupTitleId) {
-        return await this.reviews.getShortOtherReviewAll(groupTitleId);
+    async getShortOtherReviews(groupTitleIdDTO) {
+        return await this.reviews.getShortOtherReviewAll(groupTitleIdDTO.groupTitleId);
     }
-    async getTagOrderReviews(page = 1, order = false) {
-        return await this.tags.getTagAll({ limit: this.countTags, offset: (page - 1) * this.countTags, order: !!order });
+    async getTagOrderReviews(pageDTO, tagsOrderDTO) {
+        return await this.tags.getTagAll(Object.assign({ limit: this.countTags, offset: (pageDTO.page - 1) * this.countTags }, tagsOrderDTO));
     }
-    async getShortEditorUsers(page = 1) {
-        return await this.users.getShortEditorUserAll(this.countEditorRows, (page - 1) * this.countEditorRows);
+    async getShortEditorUsers(pageDTO) {
+        return await this.users.getShortEditorUserAll(this.countEditorRows, (pageDTO.page - 1) * this.countEditorRows);
     }
     async getGroupAll() {
         return await this.groups.getShortGroupAll();
     }
-    async getTitlePart(query) {
-        return await this.titles.getPartTitleAll(this.countRows, 0, query);
+    async getTitlePart(titlesQueryDTO) {
+        return await this.titles.getPartTitleAll(this.countRows, 0, titlesQueryDTO.query);
     }
-    async getTagPart(query) {
-        return await this.tags.getPartTagAll(this.countRows, 0, query);
+    async getTagPart(tagsQueryDTO) {
+        return await this.tags.getPartTagAll(this.countRows, 0, tagsQueryDTO.query);
     }
-    async getReviewSearchAll(query, page = 1) {
-        return await this.searchReview.getSearchAll(query, { limit: this.countRows, offset: (page - 1) * this.countRows, condPublic: true, blocked: false });
+    async getReviewSearchAll(searchDTO, pageDTO) {
+        return await this.searchReview.getSearchAll(searchDTO.query, {
+            limit: this.countRows, offset: (pageDTO.page - 1) * this.countRows, condPublic: true, blocked: false
+        });
     }
 };
 __decorate([
     (0, common_1.Get)('/reviews'),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Query)('tags')),
-    __param(2, (0, common_1.Query)('titles')),
-    __param(3, (0, common_1.Query)('groups')),
-    __param(4, (0, common_1.Query)('authors')),
-    __param(5, (0, common_1.Query)('sortField')),
-    __param(6, (0, common_1.Query)('sortType')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Array, Array, Array, Array, String, String]),
+    __metadata("design:paramtypes", [reviews_filter_ext_dto_1.ReviewsFilterExtDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getDescriptionOrderReviews", null);
 __decorate([
     (0, common_1.Get)('/review/:id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [id_dto_1.IdDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getFullReview", null);
 __decorate([
     (0, common_1.Get)('/other-short-reviews/:groupTitleId'),
-    __param(0, (0, common_1.Param)('groupTitleId')),
+    __param(0, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [grouptitleid_dto_1.GroupTitleIdDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getShortOtherReviews", null);
 __decorate([
     (0, common_1.Get)(['/tags', '/tags/order-:order']),
-    __param(0, (0, common_1.Query)('page')),
-    __param(1, (0, common_1.Param)('order')),
+    __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Boolean]),
+    __metadata("design:paramtypes", [page_dto_1.PageDTO, tags_order_dto_1.TagsOrderDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getTagOrderReviews", null);
 __decorate([
     (0, common_1.Get)('/editor-short-part'),
-    __param(0, (0, common_1.Query)('page')),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [page_dto_1.PageDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getShortEditorUsers", null);
 __decorate([
@@ -130,27 +135,28 @@ __decorate([
 ], GuestController.prototype, "getGroupAll", null);
 __decorate([
     (0, common_1.Get)('/part-titles/:query'),
-    __param(0, (0, common_1.Param)('query')),
+    __param(0, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [titles_query_dto_1.TitlesQueryDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getTitlePart", null);
 __decorate([
     (0, common_1.Get)('/part-tags/:query'),
-    __param(0, (0, common_1.Param)('query')),
+    __param(0, (0, common_1.Param)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [tags_query_dto_1.TagsQueryDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getTagPart", null);
 __decorate([
     (0, common_1.Get)('/search/:query'),
-    __param(0, (0, common_1.Param)('query')),
-    __param(1, (0, common_1.Query)('page')),
+    __param(0, (0, common_1.Param)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:paramtypes", [search_dto_1.SearchDTO, page_dto_1.PageDTO]),
     __metadata("design:returntype", Promise)
 ], GuestController.prototype, "getReviewSearchAll", null);
 GuestController = __decorate([
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true })),
     (0, common_1.Controller)('/guest'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         roles_service_1.RolesService,
